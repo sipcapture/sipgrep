@@ -56,33 +56,48 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A n
 
 ```
 -----------------------------------------------
-Dialog finished: [5333f1ffd238-71xi4jk51vfn]
+Dialog finished: [53342c3b200e-hgf9cyc7r0i2]
 Type: Call
-From: "From Work with Love" <sip:107@sip.xxx.com>;tag=i61qxsf4jf
-To: <sip:5000@sip.xxx.com;user=phone>
+From: "From Work with Love" <sip:107@sip.xxx.com>;tag=fucueumi19
+To: <sip:101@sip.xxx.com;user=phone>
 UAC: snom360/8.7.3.25
-Init time: 1395913216
-Connected time: 1395913216
-Ringing delta: 0 sec
-Connect delta: 0 sec
-Call duration: 9 sec
-Disconnected time: 1395913225
+CDR init ts: 1395928127
+CDR ringing ts: 1395928128
+SRD(PDD): 1 sec
+CDR answer ts: 1395928136
+WTA: 9 sec
+CDT (duration): 70 sec
+CDR termination ts: 1395928206
 Was connected: YES
 REASON: BYE
 -----------------------------------------------
 
 -----------------------------------------------
-Dialog finished: [7763c89ac17a934882cb9025251e8605@192.168.233.87]
+Dialog finished: [552E1549D6A9E0F3@192.168.178.1]
 Type: Registration
-From: "140" <sip:140@sip.xxx.com>;tag=1326110477
-To: "140" <sip:140@sip.xxx.com>
-UAC: SIPAUA/0.1.001
-Init time: 1395913223
-200 OK time: 1395913223
-Registration transaction duration: 0 sec
+From: <sip:102@sip.xxx.com>;tag=3598882807
+To: <sip:102@sip.xxxx.com>
+UAC: AVM FRITZ!Box Fon WLAN 7170 Annex A 58.04.67 (Dec 18 2008)
+CDR init ts: 1395928251
+CDR termination ts: 1395928251
+SDT: 0 sec
 Was registered: YES
 REASON: 200
 -----------------------------------------------
+
+-----------------------------------------------
+Dialog finished: [2d714880c68a824dae62049eecc91599]
+Type: Call
+From: 7001<sip:7001@xxxxxxx>;tag=1244ddd6
+To: 448455915802<sip:448455915802@xxxxxxx>
+UAC: sipcli/v1.8
+CDR init ts: 1395928246
+SDT: 8 sec
+CDR termination ts: 1395928254
+Was connected: NO
+REASON: 407
+-----------------------------------------------
+
 ```
 
 ## Colored SIP:
