@@ -1,9 +1,12 @@
 sipgrep
 =======
 
-## Goal:
+# Description:
   command line tool that help to do troubleshooting and monitoring in any SIP networks.
+  The first version of this programm (2005) was a small wrapper for ngrep. Now it's standalone application, but also partly base on the nice code of ngrep.
 
+
+# Usage:
 
 ```
 ./sipgrep  -V
@@ -52,6 +55,37 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A n
 
 
 ```
+
+# Examples:
+
+```
+#Find a dialog there From user contains '2323232'
+sipgrep -f 2323232
+
+#Find a dialog there To user contains '1111' and print dialog report
+sipgrep -f 1111 -G
+
+#Display only 603 replies
+sipgrep '^SIP/2.0 603'
+
+#Display only OPTIONS and NOTIFY requests
+sipgrep '^(OPTIONS|NOTIFY)'
+
+#Display only SUBSCRIBE dialog
+sipgrep 'CSeq:\s?\d* (SUBSCRIBE|PUBLISH|NOTIFY)' -M
+
+#Kill friendly-scanner
+sipgrep -J
+
+#Display dialogs and duplicate all traffic to HOMER sipcapture in HEPv3
+sipgrep -f 23333 -H udp:10.0.0.1:9061
+
+#collect all Calls/Regisrations dialogs during 120 seconds from the sipgrep start, print reports and exit.
+sipgrep -g -G -q 120
+
+
+```
+
 
 
 ## Report
