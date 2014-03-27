@@ -1700,6 +1700,7 @@ void print_dialogs_stats(struct callid_table *s) {
         unsigned int ringdelta = 0;
         unsigned int connectdelta = 0;
         unsigned int durationdelta = 0;
+        int now = (unsigned) time(NULL);
         
 	printf(BOLDMAGENTA "-----------------------------------------------\nDialog finished: [%s]\n" RESET, s->callid);
 	printf(BOLDGREEN "Type: " RESET);   
@@ -1711,27 +1712,32 @@ void print_dialogs_stats(struct callid_table *s) {
                  printf(BOLDGREEN "From: %s\n" RESET, s->from);   
                  printf(BOLDGREEN "To: %s\n" RESET, s->to);   
                  printf(BOLDGREEN "UAC: %s\n" RESET, s->uac);   
-                 printf(BOLDGREEN "Init timestamp: %d\n" RESET, s->cdr_init);   
+                 printf(BOLDGREEN "CDR init ts: %d\n" RESET, s->cdr_init);   
                  
                  if(s->cdr_ringing > 0) { 
-                      printf(BOLDGREEN "Ringing timestamp: %d\n" RESET, s->cdr_ringing);   
-                      printf(BOLDGREEN "Ring delta: %d sec\n" RESET, (s->cdr_ringing - s->cdr_init)); 
+                      printf(BOLDGREEN "CDR ringing ts: %d\n" RESET, s->cdr_ringing);   
+                      printf(BOLDGREEN "SRD(PDD): %d sec\n" RESET, (s->cdr_ringing - s->cdr_init)); 
                  }
                  if(s->cdr_connect > 0) {
-                    printf(BOLDGREEN "Connected timestamp: %d\n" RESET, s->cdr_connect);   
+                    printf(BOLDGREEN "CDR answer ts: %d\n" RESET, s->cdr_connect);   
                     connectdelta = s->cdr_connect -  s->cdr_init;                    
-                    durationdelta = s->cdr_disconnect - s->cdr_connect;   
-                    printf(BOLDGREEN "Connect delta: %d sec\n" RESET, connectdelta);                      
-                    printf(BOLDGREEN "Call duration: %d sec\n" RESET, durationdelta);
+                    if(s->cdr_disconnect == 0) s->cdr_disconnect = now;
+                    durationdelta = s->cdr_disconnect - s->cdr_connect;
+                    
+                    printf(BOLDGREEN "WTA: %d sec\n" RESET, connectdelta);                      
+                    printf(BOLDGREEN "CDT (duration): %d sec\n" RESET, durationdelta);
                  } 
                  else {
+                    if(s->cdr_disconnect == 0) s->cdr_disconnect = now;                    
                     durationdelta = s->cdr_disconnect - s->cdr_init;
-                    printf(BOLDGREEN "Call duration: %d sec\n" RESET, durationdelta);
+                    printf(BOLDGREEN "SDT: %d sec\n" RESET, durationdelta);
                  }                	         
 	         
-	         printf(BOLDGREEN "Disconnected timestamp: %d\n" RESET, s->cdr_disconnect);   	         
+	         printf(BOLDGREEN "CDR termination ts: %d\n" RESET, s->cdr_disconnect);   	         
 	         printf(BOLDGREEN "Was connected: %s\n" RESET, s->cdr_connect > 0 ? "YES" : "NO"); 	         
-	         if(s->termination_reason == 900) printf(BOLDGREEN "REASON: BYE\n" RESET); 
+	         
+	         if(s->terminated == 0) printf(BOLDGREEN "REASON: NOT TERMINATED\n" RESET); 	         
+	         else if(s->termination_reason == 900) printf(BOLDGREEN "REASON: BYE\n" RESET); 	         
 	         else printf(BOLDGREEN "REASON: %d\n" RESET, s->termination_reason); 
 	         
 	         break;
@@ -1742,20 +1748,22 @@ void print_dialogs_stats(struct callid_table *s) {
 	         printf(BOLDGREEN "From: %s\n" RESET, s->from);   
                  printf(BOLDGREEN "To: %s\n" RESET, s->to);   
                  printf(BOLDGREEN "UAC: %s\n" RESET, s->uac);                    
-                 printf(BOLDGREEN "Init timestamp: %d\n" RESET, s->cdr_init);   
+                 printf(BOLDGREEN "CDR init ts: %d\n" RESET, s->cdr_init);   
                  
                  if(s->registered) {
-                    printf(BOLDGREEN "200 OK timestamp: %d\n" RESET, s->cdr_connect);   
+                    printf(BOLDGREEN "CDR termination ts: %d\n" RESET, s->cdr_connect);   
                     durationdelta = s->cdr_connect -  s->cdr_init;                    
                  } 
                  else { 
-                    durationdelta = s->cdr_disconnect - s->cdr_init;
-                    printf(BOLDGREEN "Failed timestamp: %d\n" RESET, s->cdr_disconnect);                                        
+                    if(s->cdr_disconnect == 0) s->cdr_disconnect = now;
+                    durationdelta = s->cdr_disconnect - s->cdr_init;                    
+                    printf(BOLDGREEN "CDR termination: %d\n" RESET, s->cdr_disconnect);                                        
                  }
 	         
-	         printf(BOLDGREEN "Registration transaction duration: %d sec\n" RESET, durationdelta);
+	         printf(BOLDGREEN "SDT: %d sec\n" RESET, durationdelta);
 	         printf(BOLDGREEN "Was registered: %s\n" RESET, s->registered ? "YES" : "NO"); 	         
-	         if(s->termination_reason == 900) printf(BOLDGREEN "REASON: BYE\n" RESET); 
+
+	         if(s->terminated == 0) printf(BOLDGREEN "REASON: NOT TERMINATED\n" RESET);	        
 	         else printf(BOLDGREEN "REASON: %d\n" RESET, s->termination_reason); 
 
                  break;
