@@ -1,7 +1,9 @@
 sipgrep
 =======
 
-sipgrep
+Goal:
+  command line tool that help to do troubleshooting and monitoring in any SIP networks.
+
 
 ```
 ./sipgrep  -V
