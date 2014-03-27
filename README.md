@@ -80,7 +80,7 @@ sipgrep -J
 #Display dialogs and duplicate all traffic to HOMER sipcapture in HEPv3
 sipgrep -f 23333 -H udp:10.0.0.1:9061
 
-#collect all Calls/Regisrations dialogs during 120 seconds from the sipgrep start, print reports and exit.
+#collect all Calls/Regisrations dialogs during 120 seconds, print reports and exit.
 sipgrep -g -G -q 120
 
 
