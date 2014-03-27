@@ -10,11 +10,10 @@ sipgrep: V2.00, $Revision: 2.00 $
 
 ./sipgrep -h
 
-usage: sipgrep <-hNViwgGJpevxlDTRMmCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>
+usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>
              <-s snaplen> <-S limitlen> <-c contact user>
-		 <-f from user>  <-t to user> <-H capture url>
+		 <-f from user>  <-t to user> <-H capture url> <-q seconds>
              <-P portrange> <-F file> <match expression> <bpf filter>
-
    -h  is help/usage
    -V  is version information
    -e  is show empty packets
@@ -44,8 +43,11 @@ usage: sipgrep <-hNViwgGJpevxlDTRMmCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num
    -g  is disabled clean up dialogs during trace
    -G  is print dialog report during clean up
    -J  is kill friendly scanner automatically
+   -q  is close sipgrep after some time
+   -a  is enable reasembling
    -P  is use specified portrange instead of default 5060-5061
    -d  is use specified device instead of the pcap default
+
 
 ```
 
