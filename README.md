@@ -85,7 +85,7 @@ REASON: 200
 
 ## Colored SIP:
 
-![Screenshot](https://f.c.jpg)
+![Screenshot](https://cloud.githubusercontent.com/assets/4513061/2536095/2ca6e1f8-b599-11e3-9451-708b7c614f5f.png)
 
 
 ## License
