@@ -3,15 +3,18 @@ sipgrep
 
 sipgrep
 
+```
 ./sipgrep  -V
 
 sipgrep: V2.00, $Revision: 2.00 $
 
+./sipgrep -h
 
 usage: sipgrep <-hNViwgGJpevxlDTRMmCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>
              <-s snaplen> <-S limitlen> <-c contact user>
-		         <-f from user>  <-t to user> <-H capture url>
+		 <-f from user>  <-t to user> <-H capture url>
              <-P portrange> <-F file> <match expression> <bpf filter>
+
    -h  is help/usage
    -V  is version information
    -e  is show empty packets
@@ -44,10 +47,12 @@ usage: sipgrep <-hNViwgGJpevxlDTRMmCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num
    -P  is use specified portrange instead of default 5060-5061
    -d  is use specified device instead of the pcap default
 
+```
 
-Report
-=======
 
+## Report
+
+```
 -----------------------------------------------
 Dialog finished: [5333f1ffd238-71xi4jk51vfn]
 Type: Call
@@ -56,8 +61,9 @@ To: <sip:5000@sip.xxx.com;user=phone>
 UAC: snom360/8.7.3.25
 Init time: 1395913216
 Connected time: 1395913216
-Connect delta: 0
-Call duration: 9
+Ringing delta: 0 sec
+Connect delta: 0 sec
+Call duration: 9 sec
 Disconnected time: 1395913225
 Was connected: YES
 REASON: BYE
@@ -71,9 +77,19 @@ To: "140" <sip:140@sip.xxx.com>
 UAC: SIPAUA/0.1.001
 Init time: 1395913223
 200 OK time: 1395913223
-Registration transaction duration: 0
+Registration transaction duration: 0 sec
 Was registered: YES
 REASON: 200
 -----------------------------------------------
+```
+
+## Colored SIP:
+
+![Screenshot](https://f.c.jpg)
 
 
+## License
+
+Copyright (c) 2014 Alexandr Dubovikov
+
+See the [COPYING](COPYING) for details.
