@@ -1,0 +1,66 @@
+/* config.h.in.  Generated from configure.in by autoheader.  */
+
+/* pseudo-user for running sipgrep (default "nobody") */
+#undef DROPPRIVS_USER
+
+/* presence of DLT_IEEE802_11 in bpf.h */
+#undef HAVE_DLT_IEEE802_11
+
+/* presence of DLT_IEEE802_11_RADIO in bpf.h */
+#undef HAVE_DLT_IEEE802_11_RADIO
+
+/* presence of DLT_LINUX_SLL in bpf.h */
+#undef HAVE_DLT_LINUX_SLL
+
+/* presence of DLT_LOOP in bpf.h */
+#undef HAVE_DLT_LOOP
+
+/* presence of DLT_RAW in bpf.h */
+#undef HAVE_DLT_RAW
+
+/* whether to accommodate broken redhat-glibc udphdr declaration (default no)
+   */
+#undef HAVE_DUMB_UDPHDR
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#undef HAVE_LIBNSL
+
+/* Define to 1 if you have the `pcap' library (-lpcap). */
+#undef HAVE_LIBPCAP
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* whether to use privileges dropping (default yes) */
+#undef USE_DROPPRIVS
+
+/* whether to use IPv6 (default off) */
+#undef USE_IPv6
+
+/* whether to call pcap_restart() before subsequent invocations of
+   pcap_compile() (default yes) */
+#undef USE_PCAP_RESTART
+
+/* whether to use PCRE (default GNU Regex) */
+#undef USE_PCRE
