@@ -203,6 +203,10 @@ uint8_t use_color = 1, enable_dialog_remove = 1, print_report = 0, kill_friendly
 /* homer socket */
 int homer_sock = 0, use_homer = 0;
 
+/* kill time */
+int stop_working = 0;
+
+
 /* time to remove */
 unsigned int time_dialog_remove = 0;
 
@@ -215,7 +219,7 @@ int main(int argc, char **argv) {
     /* default timestamp */
     print_time = &print_time_absolute;
     
-    while ((c = getopt(argc, argv, "NhCXViwmpevlDTRMGJgs:n:c:H:d:A:I:O:S:F:P:f:t:")) != EOF) {
+    while ((c = getopt(argc, argv, "aNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:")) != EOF) {
         switch (c) {
 
             case 'F':
@@ -224,6 +228,12 @@ int main(int argc, char **argv) {
             case 'S':
                 limitlen = atoi(optarg);
                 break;
+            case 'a':
+                reasm_enable = 1;
+                break;                
+            case 'q':
+                stop_working = atoi(optarg) + (unsigned)time(NULL);
+                break;                
             case 'J':
                 kill_friendlyscanner = 1;
                 break;                                
@@ -833,6 +843,13 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
     preparsed_sip_t psip;
     char callid[256];
     rc_info_t *rcinfo = NULL;
+    int now = (unsigned) time(NULL);
+    
+    if(stop_working > 0 && now >= stop_working) {
+        printf("Timeout arrived. Exit...\n");
+        clean_exit(0);
+        return;
+    }
             
     if (!show_empty && len == 0)
         return;
@@ -1547,9 +1564,9 @@ void drop_privs(void) {
 
 void usage(int8_t e) {
     printf("usage: sipgrep <-"
-           "hNViwgGJpevxlDTRMmCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
+           "ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
            "             <-s snaplen> <-S limitlen> <-c contact user>\n"
-           "		 <-f from user>  <-t to user> <-H capture url>\n"
+           "		 <-f from user>  <-t to user> <-H capture url> <-q seconds>\n"
            "             <-P portrange> <-F file> <match expression> <bpf filter>\n"
            "   -h  is help/usage\n"
            "   -V  is version information\n"
@@ -1580,6 +1597,8 @@ void usage(int8_t e) {
            "   -g  is disabled clean up dialogs during trace\n"
            "   -G  is print dialog report during clean up\n"
            "   -J  is kill friendly scanner automatically\n"
+           "   -q  is close sipgrep after some time\n"
+           "   -a  is enable reasembling\n"
            "   -P  is use specified portrange instead of default 5060-5061\n"
            "   -d  is use specified device instead of the pcap default\n"
            "");
@@ -1659,11 +1678,17 @@ void delete_dialogs_element (char *callid) {
 void clear_all_dialogs_element () {
   
     struct callid_table *s, *tmp = NULL;
+    struct callid_remove *rm, *rtmp = NULL;        
 
     HASH_ITER(hh, dialogs, s, tmp) {                              
          if(print_report) print_dialogs_stats(s);
          HASH_DEL(dialogs, s);
          free(s);                                    
+    }
+    
+    HASH_ITER(hh, dialogs_remove, rm, rtmp) {                              
+         HASH_DEL(dialogs_remove, rm);
+         free(rm);                                    
     }
 }
 
@@ -1686,25 +1711,25 @@ void print_dialogs_stats(struct callid_table *s) {
                  printf(BOLDGREEN "From: %s\n" RESET, s->from);   
                  printf(BOLDGREEN "To: %s\n" RESET, s->to);   
                  printf(BOLDGREEN "UAC: %s\n" RESET, s->uac);   
-                 printf(BOLDGREEN "Init time: %d\n" RESET, s->cdr_init);   
+                 printf(BOLDGREEN "Init timestamp: %d\n" RESET, s->cdr_init);   
                  
                  if(s->cdr_ringing > 0) { 
-                      printf(BOLDGREEN "Ringing time: %d\n" RESET, s->cdr_ringing);   
-                      printf(BOLDGREEN "Ring delta: %d\n" RESET, (s->cdr_ringing - s->cdr_init)); 
+                      printf(BOLDGREEN "Ringing timestamp: %d\n" RESET, s->cdr_ringing);   
+                      printf(BOLDGREEN "Ring delta: %d sec\n" RESET, (s->cdr_ringing - s->cdr_init)); 
                  }
                  if(s->cdr_connect > 0) {
-                    printf(BOLDGREEN "Connected time: %d\n" RESET, s->cdr_connect);   
+                    printf(BOLDGREEN "Connected timestamp: %d\n" RESET, s->cdr_connect);   
                     connectdelta = s->cdr_connect -  s->cdr_init;                    
                     durationdelta = s->cdr_disconnect - s->cdr_connect;   
-                    printf(BOLDGREEN "Connect delta: %d\n" RESET, connectdelta);                      
-                    printf(BOLDGREEN "Call duration: %d\n" RESET, durationdelta);
+                    printf(BOLDGREEN "Connect delta: %d sec\n" RESET, connectdelta);                      
+                    printf(BOLDGREEN "Call duration: %d sec\n" RESET, durationdelta);
                  } 
                  else {
                     durationdelta = s->cdr_disconnect - s->cdr_init;
-                    printf(BOLDGREEN "Call duration: %d\n" RESET, durationdelta);
+                    printf(BOLDGREEN "Call duration: %d sec\n" RESET, durationdelta);
                  }                	         
 	         
-	         printf(BOLDGREEN "Disconnected time: %d\n" RESET, s->cdr_disconnect);   	         
+	         printf(BOLDGREEN "Disconnected timestamp: %d\n" RESET, s->cdr_disconnect);   	         
 	         printf(BOLDGREEN "Was connected: %s\n" RESET, s->cdr_connect > 0 ? "YES" : "NO"); 	         
 	         if(s->termination_reason == 900) printf(BOLDGREEN "REASON: BYE\n" RESET); 
 	         else printf(BOLDGREEN "REASON: %d\n" RESET, s->termination_reason); 
@@ -1717,18 +1742,18 @@ void print_dialogs_stats(struct callid_table *s) {
 	         printf(BOLDGREEN "From: %s\n" RESET, s->from);   
                  printf(BOLDGREEN "To: %s\n" RESET, s->to);   
                  printf(BOLDGREEN "UAC: %s\n" RESET, s->uac);                    
-                 printf(BOLDGREEN "Init time: %d\n" RESET, s->cdr_init);   
+                 printf(BOLDGREEN "Init timestamp: %d\n" RESET, s->cdr_init);   
                  
                  if(s->registered) {
-                    printf(BOLDGREEN "200 OK time: %d\n" RESET, s->cdr_connect);   
+                    printf(BOLDGREEN "200 OK timestamp: %d\n" RESET, s->cdr_connect);   
                     durationdelta = s->cdr_connect -  s->cdr_init;                    
                  } 
                  else { 
                     durationdelta = s->cdr_disconnect - s->cdr_init;
-                    printf(BOLDGREEN "Failed time: %d\n" RESET, s->cdr_disconnect);                                        
+                    printf(BOLDGREEN "Failed timestamp: %d\n" RESET, s->cdr_disconnect);                                        
                  }
 	         
-	         printf(BOLDGREEN "Registration transaction duration: %d\n" RESET, durationdelta);
+	         printf(BOLDGREEN "Registration transaction duration: %d sec\n" RESET, durationdelta);
 	         printf(BOLDGREEN "Was registered: %s\n" RESET, s->registered ? "YES" : "NO"); 	         
 	         if(s->termination_reason == 900) printf(BOLDGREEN "REASON: BYE\n" RESET); 
 	         else printf(BOLDGREEN "REASON: %d\n" RESET, s->termination_reason); 
@@ -1782,7 +1807,7 @@ void send_kill_to_friendly_scanner(const char *ip, uint16_t port) {
           return;
         }
 	
-	printf("Sending packet\n");
+	printf("Sending kill packet\n");
 
         if (sendto(s, SIP_CRASH, strlen(SIP_CRASH), 0, (struct sockaddr *) &si_other, slen)==-1) {
             fprintf(stderr, "couldn't send\n");
