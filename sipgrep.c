@@ -1820,7 +1820,7 @@ void send_kill_to_friendly_scanner(const char *ip, uint16_t port) {
           return;
         }
 	
-	printf("Sending kill packet\n");
+	printf("Sending the kill packet\n");
 
         if (sendto(s, SIP_CRASH, strlen(SIP_CRASH), 0, (struct sockaddr *) &si_other, slen)==-1) {
             fprintf(stderr, "couldn't send\n");
