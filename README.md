@@ -6,7 +6,7 @@ SipGrep 2
   The first version of this program (dated 2005) was a small wrapper for ngrep. Version 2.x provides a full standalone application with numerous additional features geared towards SIP, building upon the excellent ngrep code baseline.
 
 
-# Usage:
+## Usage:
 
 ```
 ./sipgrep  -V
@@ -57,7 +57,7 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A 
 
 ```
 
-# Examples:
+### Examples:
 
 ```
 #Find a dialog there From user contains '2323232'
@@ -92,7 +92,7 @@ sipgrep -g -G -q 120
 
 
 
-## Reports
+### Reports
 
 ```
 -----------------------------------------------
@@ -140,7 +140,7 @@ REASON: 407
 
 ```
 
-## Colored SIP:
+### Colored SIP:
 
 ![Screenshot](https://cloud.githubusercontent.com/assets/4513061/2536095/2ca6e1f8-b599-11e3-9451-708b7c614f5f.png)
 
