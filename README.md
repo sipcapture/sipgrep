@@ -16,9 +16,9 @@ sipgrep: V2.00, $Revision: 2.00 $
 
 ./sipgrep -h
 
-usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>
-             <-s snaplen> <-S limitlen> <-c contact user>
-		 <-f from user>  <-t to user> <-H capture url> <-q seconds>
+usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A num>
+             <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>
+	     <-f from user>  <-t to user> <-H capture url> <-q seconds>
              <-P portrange> <-F file> <match expression> <bpf filter>
    -h  is help/usage
    -V  is version information
@@ -49,6 +49,7 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A n
    -g  is disabled clean up dialogs during trace
    -G  is print dialog report during clean up
    -J  is kill friendly scanner automatically
+   -j  is kill friendly scanner automatically matching user agent string
    -q  is close sipgrep after some time
    -a  is enable reasembling
    -P  is use specified portrange instead of default 5060-5061
@@ -77,6 +78,9 @@ sipgrep 'CSeq:\s?\d* (SUBSCRIBE|PUBLISH|NOTIFY)' -M
 
 #Kill friendly-scanner
 sipgrep -J
+
+#Kill friendly-scanner with custom UAC
+sipgrep -j sipvicious
 
 #Display dialogs and duplicate all traffic to HOMER sipcapture in HEPv3
 sipgrep -f 23333 -H udp:10.0.0.1:9061
