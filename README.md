@@ -149,4 +149,4 @@ REASON: 407
 
 Copyright (c) 2014 Alexandr Dubovikov
 
-See the [COPYING](COPYING) for details.
+sipgrep is released under GNU GPL v3. See [COPYING](COPYING) for details.
