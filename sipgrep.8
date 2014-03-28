@@ -1,0 +1,220 @@
+.\" $Id: sipgrep.8,v 2.00 2014/03/28 12:18:35 jpr5 Exp $
+.\"
+.\" All content, except portions of the bpf filter explanation, are:
+.\"
+.\" Copyright (c) 2014  Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+.\" Copyright (c) 2014  Sipcapture.org <support@sipcapture.org>
+.\"
+.\" Please refer to the LICENSE file for more information.
+
+.TH SIPGREP 8 "March 2014" *nux "User Manuals"
+
+.SH NAME
+
+sipgrep \- sip packet grep
+
+.SH SYNOPSIS
+
+.B sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO
+.I pcap_dump
+.B > < -n
+.I num
+.B > < -d
+.I dev
+.B > < -A
+.I num
+.B > < -s
+.I snaplen
+.B > < -S
+.I limitlen
+.B > < -c
+.I contact user
+.B > < -j
+.I user agent
+.B > < -f
+.I from user
+.B > < -t
+.I to user
+.B > < -H
+.I capture URL
+.B > < -q
+.I seconds
+.B > < -P
+.I portrange
+.B > < -F
+.I file
+.B > <
+.I match expression
+.B > <
+.I bpf filter
+.B >
+
+.SH DESCRIPTION
+
+sipgrep strives to provide most of GNU grep's common features, applying
+them to the SIP signaling protocol.  sipgrep is a pcap-aware tool that
+will allow you to specify extended regular expressions to match against data
+payloads of SIP packets with application specific filtering options.
+The tool understands filter logic common to other packet sniffing tools,
+such as
+.BR tcpdump (8)
+and
+.BR sipgrep (1).
+
+
+.SH OPTIONS
+.IP -h
+Display help/usage information.
+
+.IP -V
+Display version information.
+
+.IP -e
+Display empty packets.
+
+.IP -i
+Ignore case.
+
+.IP -v
+Invert match.
+
+.IP -R
+Do not try to drop privileges to the DROPPRIVS_USER.
+
+sipgrep makes no effort to validate input from live or offline sources
+as it is focused more on performance and handling large amounts of
+data than protocol correctness, which is most often a fair assumption
+to make.  However, sometimes it matters and thus as a rule sipgrep will
+try to be defensive and drop any root privileges it might have.
+
+There exist scenarios where this behaviour can become an obstacle, so
+this option is provided to end-users who want to disable this feature,
+but must do so with an understanding of the risks.  Packets can be
+randomly malformed or even specifically designed to overflow sniffers
+and take control of them, and revoking root privileges is currently
+the only risk mitigation sipgrep employs against such an attack.  Use
+this option and turn it off at your own risk.
+
+.IP -w
+Match the regex expression as a word.
+
+.IP -p
+Don't put the interface into promiscuous mode.
+
+.IP -l
+Make stdout line buffered.
+
+.IP -D
+When reading pcap_dump files, replay them at their recorded time
+intervals (mimic realtime).
+
+.IP -T
+Print a timestamp in the form of +S.UUUUUU, indicating the delta
+between packet matches.
+
+.IP -m
+Disable SIP Dialog matching.
+
+.IP -M
+Disable multi-line match (prefers single-line match instead).
+
+.IP "-I pcap_dump"
+Input file pcap_dump into sipgrep.  Works with any pcap-compatible dump
+file format.  This option is useful for searching for a wide range of
+different patterns over the same packet stream.
+
+.IP "-O pcap_dump"
+Output matched packets to a pcap-compatible dump file.  This feature
+does not interfere with normal output to stdout.
+
+.IP "-n num"
+Match only
+.I \fInum\fP
+packets total, then exit.
+
+.IP "-A num"
+Dump \fInum\fP packets of trailing context after matching a packet.
+
+.IP "-s snaplen"
+Set the bpf caplen to snaplen (default 65536).
+
+.IP "-S limitlen"
+Set the upper limit on the size of packets that sipgrep will look at.
+Useful for looking at only the first N bytes of packets without
+changing the BPF snaplen.
+
+.IP "-C"
+Do not use colors in stdout.
+
+.IP "-c"
+Match user in Contact: SIP header.
+
+.IP "-f"
+Match user in From: SIP header.
+
+.IP "-t"
+Match user in To: SIP header.
+
+.IP "-F file"
+Read in the bpf filter from the specified filename.  This is a
+compatibility option for users familiar with tcpdump.  Please note
+that specifying ``-F'' will override any bpf filter specified on the
+command-line.
+
+.IP "-H ip:port"
+Duplicate matching traffic to HEP Capture Server / HOMER.
+
+.IP -N
+Show sub-protocol number along with single-character identifier
+(useful when observing raw or unknown protocols).
+
+.IP -g
+Disable clean-up of Dialogs during trace.
+
+.IP -G
+Print Dialogs report during trace.
+
+.IP -J
+Automatically send SIP packet-of-death to SipVicious scanners (kill).
+
+.IP -j
+For matching user-agent strings send SIP packet-of-death to
+SipVicious scanners (kill).
+
+.IP -q
+Terminate sipgrep after a specified number of seconds.
+
+.IP -a
+Enable packet re-assemblation.
+
+.IP -P
+Specify SIP port range (default 5060-5061).
+
+.IP "-d dev"
+By default sipgrep will select a default interface to listen on.  Use
+this option to force sipgrep to listen on interface \fIdev\fP.
+
+.SH DIAGNOSTICS
+
+Errors from
+.B sipgrep, libpcap,
+and the
+.B GNU regex library
+are all output to stderr.
+
+.SH AUTHOR
+
+Written by Alexandr Dubovikov <alexandr.dubovikov@gmail.com>.
+
+.SH REPORTING BUGS
+
+Please report bugs to the sipgrep Bug Tracker, located at
+
+    https://github.com/adubovikov/sipgrep/issues
+
+Non-bug, non-feature-request general feedback should be sent to the
+author directly by email.
+
+.SH NOTES
+
+ALL YOUR BASE ARE BELONG TO HOMER.
