@@ -268,54 +268,11 @@ dnl
 
 AC_MSG_CHECKING(for a complete set of pcap headers)
 
-possible_dirs="`eval echo -n ${includedir}` \
-	       /usr/include /usr/include/pcap \
-               /usr/local/include /usr/local/include/pcap \
-               /usr/share/include /usr/share/include/pcap"
-
-AC_ARG_WITH(pcap-includes,
-[  --with-pcap-includes        specify the pcap include directory],
-[PCAP_DIR=$withval],
-[PCAP_DIR=$possible_dirs])
-
-pcap_dir=""
-for dir in $PCAP_DIR ; do 
-    if test -d $dir -a -r "$dir/pcap.h" ; then 
-       if test -n "$pcap_dir" -a "$pcap_dir" != "$dir"; then
-          echo 
-          echo; echo more than one set found in:
-          echo  $pcap_dir 
-          echo  $dir
-          echo; echo please wipe out all unused pcap installations
-          exit
-       else 
-          pcap_dir="$dir"
-       fi
-    fi
-done
-
-if test -z "$pcap_dir" ; then
-   echo no; echo !!! couldn\'t find a complete set of pcap headers
-   exit
-else
-   echo found $pcap_dir
-
-   PCAP_INCLUDE="-I$pcap_dir"
-   PCAP_LINK="-L`dirname $pcap_dir`/lib"
-
-   AC_SUBST(PCAP_INCLUDE)
-   AC_SUBST(PCAP_LINK)
-  
-fi
-
+AC_CHECK_HEADERS([pcap.h],,[AC_MSG_ERROR([sipgrep cannot find pcap.h])])
 
 dnl 
 dnl Next figure out which bpf header file to look at.
 dnl
-
-AC_MSG_CHECKING(for BPF include path)
-BPF=`/usr/bin/perl -ne '/include\s+<(.*bpf\.h)>/ && print "$1\n"' $pcap_dir/pcap.h`
-echo $BPF
 
 dnl
 dnl Check for DLT_* types that might not have existed in older
