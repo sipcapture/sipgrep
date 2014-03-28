@@ -2,7 +2,7 @@ SipGrep 2
 =======
 
 # Description:
-  Sipgrep is command line tool to capture, display and troubleshoot SIP signaling over IP networks.
+  Sipgrep is a powerful command line tool to sniff, capture, display and troubleshoot SIP signaling over IP networks.
   
   The first version of this programm (2005) was a small wrapper for ngrep. Version 2.x provides a full standalone application, building upon the excellent ngrep code baseline.
 
