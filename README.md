@@ -1,11 +1,9 @@
 SipGrep 2
 =======
 
-# Description:
   Sipgrep is a powerful pcap-aware tool command line tool to sniff, capture, display and troubleshoot SIP signaling over IP networks, allowing the user to specify extended regular expressions matching against SIP headers.
 
-# History:
-  The first version of this program (dated 2005) was a small wrapper for ngrep. Version 2.x provides a full standalone application with many additional features, building upon the excellent ngrep code baseline.
+  The first version of this program (dated 2005) was a small wrapper for ngrep. Version 2.x provides a full standalone application with numerous additional features geared towards SIP, building upon the excellent ngrep code baseline.
 
 
 # Usage:
