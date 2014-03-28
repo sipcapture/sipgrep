@@ -649,7 +649,7 @@ void process(u_char *d, struct pcap_pkthdr *h, u_char *p) {
 
 #if HAVE_DLT_IEEE802_11_RADIO
     if (radiotap_present) {
-        uint16_t radio_len = ((struct NGREP_rtaphdr_t *)(p))->it_len;
+        uint16_t radio_len = ((struct SIPGREP_rtaphdr_t *)(p))->it_len;
         ip4_pkt = (struct ip *)(p + link_offset + radio_len);
         len    -= radio_len;
     }
