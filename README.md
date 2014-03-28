@@ -66,8 +66,8 @@ sipgrep -f 2323232
 #Find a dialog there To user contains '1111' and print dialog report
 sipgrep -f 1111 -G
 
-#Display only 603 replies
-sipgrep '^SIP/2.0 603'
+#Display only 603 replies without dialog match
+sipgrep '^SIP/2.0 603' -m
 
 #Display only OPTIONS and NOTIFY requests
 sipgrep '^(OPTIONS|NOTIFY)'
