@@ -205,7 +205,8 @@ int homer_sock = 0, use_homer = 0;
 
 /* kill time */
 int stop_working = 0;
-
+/* default friendly scanner UAC */
+char *friendly_scanner_uac = "friendly-scanner";
 
 /* time to remove */
 unsigned int time_dialog_remove = 0;
@@ -219,7 +220,7 @@ int main(int argc, char **argv) {
     /* default timestamp */
     print_time = &print_time_absolute;
     
-    while ((c = getopt(argc, argv, "aNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:")) != EOF) {
+    while ((c = getopt(argc, argv, "aNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:")) != EOF) {
         switch (c) {
 
             case 'F':
@@ -235,8 +236,12 @@ int main(int argc, char **argv) {
                 stop_working = atoi(optarg) + (unsigned)time(NULL);
                 break;                
             case 'J':
+                kill_friendlyscanner = 1;                
+                break;                  
+            case 'j':
+                friendly_scanner_uac = optarg;
                 kill_friendlyscanner = 1;
-                break;                                
+                break;                                                
             case 'g':
                 enable_dialog_remove = 0;
                 break;                
@@ -900,8 +905,8 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
          }
          
                                      
-         if(kill_friendlyscanner && psip.uac.len > 0 && (strstr(psip.uac.s, "friendly-scanner") != NULL)) {         
-             printf("Killing friendly scanner...\n");
+         if(kill_friendlyscanner && psip.uac.len > 0 && (strstr(psip.uac.s, friendly_scanner_uac) != NULL)) {         
+             printf("Killing friendly scanner [%s]...\n", friendly_scanner_uac);
              send_kill_to_friendly_scanner(ip_src, sport);             
          }
                  
@@ -1245,14 +1250,13 @@ void dump_byline(unsigned char *data, uint32_t len) {
 
                      if(!strncmp("SIP/2.0 ", s, 8)) {
                           start = 8;
-                          pch=strchr(s+8,' ');
-                          if(pch != NULL) stop = pch-s+1;                       
-                          color = BOLDRED;                                        
+                          stop = 0;
+                          color = BOLDYELLOW;                                        
                       }              
                       else if((pch=strchr(s,' ')) != NULL) {                              
                            start = 0;
                            stop = pch-s +1;
-                           color = BOLDYELLOW;        
+                           color = BOLDRED;        
                       }                        
                                   
                  }
@@ -1564,8 +1568,8 @@ void drop_privs(void) {
 
 void usage(int8_t e) {
     printf("usage: sipgrep <-"
-           "ahNViwgGJpevxlDTRMmqCJ> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
-           "             <-s snaplen> <-S limitlen> <-c contact user>\n"
+           "ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
+           "             <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>\n"
            "		 <-f from user>  <-t to user> <-H capture url> <-q seconds>\n"
            "             <-P portrange> <-F file> <match expression> <bpf filter>\n"
            "   -h  is help/usage\n"
@@ -1597,6 +1601,7 @@ void usage(int8_t e) {
            "   -g  is disabled clean up dialogs during trace\n"
            "   -G  is print dialog report during clean up\n"
            "   -J  is kill friendly scanner automatically\n"
+           "   -j  is kill friendly scanner automatically matching user agent string\n"
            "   -q  is close sipgrep after some time\n"
            "   -a  is enable reasembling\n"
            "   -P  is use specified portrange instead of default 5060-5061\n"
