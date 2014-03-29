@@ -1,0 +1,23 @@
+Source: sipgrep
+Section: net
+Priority: optional
+Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
+Uploaders: Victor Seva <linuxmaniac@torreviejawireless.org>
+Build-Depends: debhelper (>= 9),
+               dpkg-dev (>= 1.16.1.1),
+               libpcap-dev,
+               libpcre3-dev,
+Standards-Version: 3.9.5
+Homepage: https://github.com/adubovikov/sipgrep
+Vcs-git: git://anonscm.debian.org/pkg-voip/sipgrep.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-voip/sipgrep.git
+
+Package: sipgrep
+Architecture: linux-any
+Multi-Arch: foreign
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: command line tool to sniff, capture, display SIP messages
+ Powerful pcap-aware tool command line tool to sniff, capture, display
+ and troubleshoot SIP signaling over IP networks, allowing the user to
+ specify extended regular expressions matching against SIP headers.

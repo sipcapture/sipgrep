@@ -1,0 +1,18 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: sipgrep
+Upstream-Contact: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Source: https://github.com/adubovikov/sipgrep
+
+Files: *
+Copyright:
+ Copyright (c) 2014 Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+ Copyright (c) 2014 Lorenzo Mangani <lorenzo.mangani@gmail.com>
+License: GPL-3.0+
+ On Debian systems, the full text of the GNU General Public
+ License version 3 can be found in the file `/usr/share/common-licenses/GPL-3'.
+
+Files: debian/*
+Copyright: 2014 Victor Seva <linuxmaniac@torreviejawireless.org>
+License: GPL-3+
+ On Debian systems, the full text of the GNU General Public
+ License version 3 can be found in the file `/usr/share/common-licenses/GPL-3'.
