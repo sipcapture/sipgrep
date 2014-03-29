@@ -8,15 +8,15 @@
 CC=@CC@
 
 CFLAGS=@CFLAGS@ -D@OS@ @DEFS@ @EXTRA_DEFINES@ 
-INCLUDES=-I@srcdir@ @EXTRA_INCLUDES@
+INCLUDES=-I@srcdir@ @PCAP_INCLUDE@ @EXTRA_INCLUDES@
 
-LDFLAGS=@LDFLAGS@
+LDFLAGS=@LDFLAGS@ @PCAP_LINK@
 LIBS=-lpcap @EXTRA_LIBS@ 
 
 STRIPFLAG=@STRIPFLAG@
 
-SRC=sipgrep.c ipreasm.c sipparse.c
-OBJS=sipgrep.o ipreasm.o sipparse.o
+SRC=sipgrep.c sipparse.c ipreasm.c
+OBJS=sipgrep.o sipparse.o ipreasm.o
 TARGET=sipgrep
 MANPAGE=sipgrep.8
 
@@ -32,20 +32,17 @@ MANDIR_INSTALL = $(mandir)/man8
 
 INSTALL = ./install-sh
 
-REGEX_DIR=@REGEX_DIR@
-REGEX_OBJS=@REGEX_OBJS@
-
 
 all: $(TARGET) 
 
-$(TARGET): $(REGEX_OBJS) $(OBJS) 
-	$(CC) $(CFLAGS) $(LDFLAGS) $(STRIPFLAG) -o $(TARGET) $(OBJS) $(REGEX_OBJS) $(LIBS) 
+$(TARGET): $(OBJS) 
+	$(CC) $(CFLAGS) $(LDFLAGS) $(STRIPFLAG) -o $(TARGET) $(OBJS) $(LIBS) 
 
-debug: $(REGEX_OBJS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -g -o $(TARGET) $(OBJS) $(REGEX_OBJS) $(LIBS) 
+debug: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -g -o $(TARGET) $(OBJS) $(LIBS) 
 
-static: $(REGEX_OBJS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(STRIPFLAG) -o $(TARGET).static -static $(OBJS) $(REGEX_OBJS) $(LIBS) 
+static: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(STRIPFLAG) -o $(TARGET).static -static $(OBJS) $(LIBS) 
 
 install: $(TARGET)
 	$(INSTALL) -c -m 0755 $(TARGET)  $(DESTDIR)/$(BINDIR_INSTALL)/$(TARGET)
@@ -55,15 +52,10 @@ install: $(TARGET)
 	$(CC) $(CFLAGS) $(INCLUDES) -g -c $<
 
 clean:
-	make -C $(REGEX_DIR) clean
-	rm -f *~ $(OBJS) $(REGEX_OBJS) $(TARGET) $(TARGET).static
+	rm -f *~ $(OBJS) $(TARGET) $(TARGET).static
 
 distclean: clean 
-	make -C $(REGEX_DIR) distclean
 	rm -f config.status config.cache config.log config.h Makefile 
-
-$(REGEX_OBJS): $(REGEX_OBJS:.o=.c) $(REGEX_DIR)/*.h
-	$(MAKE) $(MAKEFLAGS) -C $(REGEX_DIR) $(notdir $(REGEX_OBJS))
 
 $(OBJS): Makefile sipgrep.c sipgrep.h
 

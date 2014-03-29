@@ -101,11 +101,7 @@
 #include <netinet/icmp6.h>
 #endif
 
-#if USE_PCRE
-#include "pcre-5.0/pcre.h"
-#else
-#include "regex-0.12/regex.h"
-#endif
+#include <pcre.h>
 
 #include "core_hep.h"
 #include "sipgrep.h"
@@ -138,20 +134,14 @@ struct callid_table *dialogs = NULL;
 struct callid_remove *dialogs_remove = NULL;
 
 /*
- * GNU Regex/PCRE
+ * GNU PCRE
  */
 
-#if USE_PCRE
 int32_t err_offset;
 char *re_err = NULL;
 
 pcre *pattern = NULL;
 pcre_extra *pattern_extra = NULL;
-#else
-const char *re_err = NULL;
-
-struct re_pattern_buffer pattern;
-#endif
 
 /*
  * Matching
@@ -463,7 +453,6 @@ int main(int argc, char **argv) {
 
     if (match_data) {
 
-#if USE_PCRE
             uint32_t pcre_options = PCRE_UNGREEDY;
 
             if (re_ignore_case)
@@ -471,33 +460,6 @@ int main(int argc, char **argv) {
 
             if (re_multiline_match)
                 pcre_options |= PCRE_DOTALL;
-#else
-            re_syntax_options = RE_CHAR_CLASSES | RE_NO_BK_PARENS | RE_NO_BK_VBAR |
-                                RE_CONTEXT_INDEP_ANCHORS | RE_CONTEXT_INDEP_OPS;
-
-            if (re_multiline_match)
-                re_syntax_options |= RE_DOT_NEWLINE;
-
-            if (re_ignore_case) {
-                uint32_t i;
-                char *s;
-
-                pattern.translate = (char*)malloc(256);
-                s = pattern.translate;
-
-                for (i = 0; i < 256; i++)
-                    s[i] = i;
-                for (i = 'A'; i <= 'Z'; i++)
-                    s[i] = i + 32;
-
-                s = match_data;
-                while (*s) {
-                    *s = tolower(*s);
-                    s++;
-                }
-
-            } else pattern.translate = NULL;
-#endif
 
             if (re_match_word) {
                 char *word_regex = malloc(strlen(match_data) * 3 + strlen(WORD_REGEX));
@@ -505,7 +467,6 @@ int main(int argc, char **argv) {
                 match_data = word_regex;
             }
 
-#if USE_PCRE
             pattern = pcre_compile(match_data, pcre_options, (const char **)&re_err, &err_offset, 0);
 
             if (!pattern) {
@@ -514,19 +475,6 @@ int main(int argc, char **argv) {
             }
 
             pattern_extra = pcre_study(pattern, 0, (const char **)&re_err);
-#else
-            re_err = re_compile_pattern(match_data, strlen(match_data), &pattern);
-            if (re_err) {
-                fprintf(stderr, "regex compile: %s\n", re_err);
-                clean_exit(-1);
-            }
-
-            pattern.fastmap = (char*)malloc(256);
-            if (re_compile_fastmap(&pattern)) {
-                perror("fastmap compile failed");
-                clean_exit(-1);
-            }
-#endif
 
             match_func = &re_match_func;
         
@@ -1191,7 +1139,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
 int8_t re_match_func(unsigned char *data, uint32_t len) {
 
-#if USE_PCRE
     switch(pcre_exec(pattern, 0, data, (int32_t)len, 0, 0, 0, 0)) {
         case PCRE_ERROR_NULL:
         case PCRE_ERROR_BADOPTION:
@@ -1204,16 +1151,6 @@ int8_t re_match_func(unsigned char *data, uint32_t len) {
         case PCRE_ERROR_NOMATCH:
             return 0;
     }
-#else
-    switch (re_search(&pattern, data, (int32_t)len, 0, len, 0)) {
-        case -2:
-            perror("she's dead, jim\n");
-            clean_exit(-2);
-
-        case -1:
-            return 0;
-    }
-#endif
 
     if (max_matches)
         matches++;
@@ -1630,13 +1567,8 @@ void clean_exit(int32_t sig) {
     if (quiet < 1 && sig >= 0)
         printf("exit\n");
 
-#if USE_PCRE
     if (pattern)       pcre_free(pattern);
     if (pattern_extra) pcre_free(pattern_extra);
-#else
-    if (pattern.translate) free(pattern.translate);
-    if (pattern.fastmap)   free(pattern.fastmap);
-#endif
 
     if (bin_data)          free(bin_data);
 
