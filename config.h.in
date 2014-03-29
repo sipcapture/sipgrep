@@ -62,5 +62,5 @@
    pcap_compile() (default yes) */
 #undef USE_PCAP_RESTART
 
-/* whether to use PCRE (default GNU Regex) */
+/* Use PCRE library */
 #undef USE_PCRE

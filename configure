@@ -558,51 +558,15 @@ PACKAGE_BUGREPORT='http://www.sipcapture.org'
 PACKAGE_URL=''
 
 ac_default_prefix=/usr/local
-# Factoring default headers for most tests.
-ac_includes_default="\
-#include <stdio.h>
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef STDC_HEADERS
-# include <stdlib.h>
-# include <stddef.h>
-#else
-# ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-# endif
-#endif
-#ifdef HAVE_STRING_H
-# if !defined STDC_HEADERS && defined HAVE_MEMORY_H
-#  include <memory.h>
-# endif
-# include <string.h>
-#endif
-#ifdef HAVE_STRINGS_H
-# include <strings.h>
-#endif
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif"
-
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 EXTRA_LIBS
 EXTRA_INCLUDES
 EXTRA_DEFINES
+PCAP_LINK
+PCAP_INCLUDE
 STRIPFLAG
 OS
-REGEX_OBJS
-REGEX_DIR
 ac_prefix_program
 EGREP
 GREP
@@ -671,7 +635,7 @@ enable_pcap_restart
 with_dropprivs_user
 enable_dropprivs
 enable_ipv6
-enable_pcre
+with_pcap_includes
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1301,12 +1265,12 @@ Optional Features:
   --disable-pcap-restart  disable libpcap restart in parser
   --disable-dropprivs     disable privilege dropping logic
   --enable-ipv6           enable IPv6 (and ICMPv6) support
-  --enable-pcre           use PCRE instead of GNU regex
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-dropprivs-user=user  use different user for dropprivs
+  --with-pcap-includes        specify the pcap include directory
 
 Some influential environment variables:
   CC          C compiler command
@@ -1560,128 +1524,6 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_try_link
-
-# ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
-# -------------------------------------------------------
-# Tests whether HEADER exists, giving a warning if it cannot be compiled using
-# the include files in INCLUDES and setting the cache variable VAR
-# accordingly.
-ac_fn_c_check_header_mongrel ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  if eval "test \"\${$3+set}\"" = set; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval "test \"\${$3+set}\"" = set; then :
-  $as_echo_n "(cached) " >&6
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-else
-  # Is the header compilable?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
-$as_echo_n "checking $2 usability... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_header_compiler=yes
-else
-  ac_header_compiler=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
-$as_echo "$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
-$as_echo_n "checking $2 presence... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <$2>
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"; then :
-  ac_header_preproc=yes
-else
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
-$as_echo "$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in #((
-  yes:no: )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-    ;;
-  no:yes:* )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-( $as_echo "## ---------------------------------------- ##
-## Report this to http://www.sipcapture.org ##
-## ---------------------------------------- ##"
-     ) | sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval "test \"\${$3+set}\"" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=\$ac_header_compiler"
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-fi
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-
-} # ac_fn_c_check_header_mongrel
-
-# ac_fn_c_check_header_compile LINENO HEADER VAR INCLUDES
-# -------------------------------------------------------
-# Tests whether HEADER exists and can be compiled using the include files in
-# INCLUDES, setting the cache variable VAR accordingly.
-ac_fn_c_check_header_compile ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval "test \"\${$3+set}\"" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-
-} # ac_fn_c_check_header_compile
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -3528,44 +3370,53 @@ fi
 
 
 
-# Check whether --enable-pcre was given.
-if test "${enable_pcre+set}" = set; then :
-  enableval=$enable_pcre;
-  use_pcre="$enableval"
-
+# Checks for libpcre
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pcre Library and Header files..." >&5
+$as_echo "$as_me: checking for pcre Library and Header files..." >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pcre_compile in -lpcre" >&5
+$as_echo_n "checking for pcre_compile in -lpcre... " >&6; }
+if test "${ac_cv_lib_pcre_pcre_compile+set}" = set; then :
+  $as_echo_n "(cached) " >&6
 else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpcre  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 
-  use_pcre="no"
-
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pcre_compile ();
+int
+main ()
+{
+return pcre_compile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_pcre_pcre_compile=yes
+else
+  ac_cv_lib_pcre_pcre_compile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcre_pcre_compile" >&5
+$as_echo "$ac_cv_lib_pcre_pcre_compile" >&6; }
+if test "x$ac_cv_lib_pcre_pcre_compile" = x""yes; then :
+  EXTRA_LIBS="${EXTRA_LIBS} -lpcre"
+else
+  as_fn_error $? "libpcre required" "$LINENO" 5
 fi
 
 
-if test $use_pcre = yes; then
-
-  echo
-  echo 'Configuring Perl-Compatible Regular Expression (PCRE) library ...'
-  echo
-
-  REGEX_DIR='pcre-5.0'
-  REGEX_OBJS="$REGEX_DIR/pcre.o $REGEX_DIR/study.o"
-  USE_PCRE="1"
-
-else
-
-  echo
-  echo 'Configuring GNU Regular Expression library ...'
-  echo
-
-  REGEX_DIR='regex-0.12'
-  REGEX_OBJS="$REGEX_DIR/regex.o"
-  USE_PCRE="0"
-
-fi
-
-( cd $REGEX_DIR && ./configure )
-
-
-
+$as_echo "#define USE_PCRE 1" >>confdefs.h
 
 
 echo
@@ -3797,38 +3648,60 @@ EXTRA_DEFINES="$EXTRA_DEFINES -D_BSD_SOURCE=1 -D__FAVOR_BSD=1"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for a complete set of pcap headers" >&5
 $as_echo_n "checking for a complete set of pcap headers... " >&6; }
 
-# On IRIX 5.3, sys/types and inttypes.h are conflicting.
-for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
-		  inttypes.h stdint.h unistd.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
-"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-for ac_header in pcap.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "pcap.h" "ac_cv_header_pcap_h" "$ac_includes_default"
-if test "x$ac_cv_header_pcap_h" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PCAP_H 1
-_ACEOF
-
+if grep -q "<pcap/pcap.h>" "/usr/include/pcap.h"; then
+   possible_dirs="/usr/include/pcap"
 else
-  as_fn_error $? "sipgrep cannot find pcap.h" "$LINENO" 5
+   possible_dirs="`eval echo -n ${includedir}` \
+	/usr/include /usr/include/pcap \
+        /usr/local/include /usr/local/include/pcap \
+        /usr/share/include /usr/share/include/pcap"
 fi
 
+
+# Check whether --with-pcap-includes was given.
+if test "${with_pcap_includes+set}" = set; then :
+  withval=$with_pcap_includes; PCAP_DIR=$withval
+else
+  PCAP_DIR=$possible_dirs
+fi
+
+
+pcap_dir=""
+for dir in $PCAP_DIR ; do
+    if test -d $dir -a -r "$dir/pcap.h" ; then
+       if test -n "$pcap_dir" -a "$pcap_dir" != "$dir"; then
+          echo
+          echo; echo more than one set found in:
+          echo  $pcap_dir
+          echo  $dir
+          echo; echo please wipe out all unused pcap installations
+          exit
+       else
+          pcap_dir="$dir"
+       fi
+    fi
 done
 
+if test -z "$pcap_dir" ; then
+   echo no; echo !!! couldn\'t find a complete set of pcap headers
+   exit
+else
+   echo found $pcap_dir
 
+   PCAP_INCLUDE="-I$pcap_dir"
+   PCAP_LINK="-L`dirname $pcap_dir`/lib"
+
+
+
+
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for BPF include path" >&5
+$as_echo_n "checking for BPF include path... " >&6; }
+BPF=`/usr/bin/perl -ne '/include\s+<(.*bpf\.h)>/ && print "$1\n"' $pcap_dir/pcap.h`
+echo $BPF
 
 
 present=""
@@ -3947,11 +3820,6 @@ cat >>confdefs.h <<_ACEOF
 #define USE_PCAP_RESTART $USE_PCAP_RESTART
 _ACEOF
 
-
-
-cat >>confdefs.h <<_ACEOF
-#define USE_PCRE $USE_PCRE
-_ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
@@ -4077,12 +3945,7 @@ else
     echo "CONFIG: privilege dropping disabled"
 fi
 
-if test "$USE_PCRE" = "1"; then
-    echo "CONFIG: using PCRE regex library"
-else
-    echo "CONFIG: using GNU regex library"
-fi
-
+echo "CONFIG: using PCRE regex library"
 
 
 echo
