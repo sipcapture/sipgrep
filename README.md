@@ -6,6 +6,37 @@ SipGrep 2
   The first version of this program (dated 2005) was a small wrapper for ngrep. Version 2.x provides a full standalone application with numerous additional features geared towards SIP, building upon the excellent ngrep code baseline.
 
 
+## Requirements:
+
+* libpcap
+* libpcre
+
+On Debian/Ubuntu: `sudo apt-get install libpcap-dev libpcre3-dev`
+
+On CentOS/RHEL: `yum install libpcap-devel pcre-devel`
+
+
+
+## Installation
+
+### Clone from GIT:
+
+```
+cd /usr/src
+git clone https://github.com/adubovikov/sipgrep.git
+```
+
+### Build and Install:
+
+```
+cd sipgrep
+./build.sh
+./configure
+make && make install
+```
+
+
+
 ## Usage:
 
 ```
