@@ -1249,7 +1249,7 @@ void dump_byline(unsigned char *data, uint32_t len) {
                  }
             
                  if(start >= 0 && start == offset) {
-                     printf(color);        
+                     printf("%s",color);
                      start == -1;
                  }                       
             }                        
