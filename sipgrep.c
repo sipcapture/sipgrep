@@ -1701,7 +1701,7 @@ void usage(int8_t e) {
            "   -e  is show empty packets\n"
            "   -i  is ignore case\n"
            "   -v  is invert match\n"
-           "   -R  is not do privilege revocation logic\n"
+           "   -R  is don't do privilege revocation logic\n"
            "   -w  is word-regex (expression must match as a word)\n"
            "   -p  is don't go into promiscuous mode\n"
            "   -l  is make stdout line buffered\n"
