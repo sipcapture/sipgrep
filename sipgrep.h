@@ -14,7 +14,7 @@
  *
  */
 
-#define VERSION "2.00"
+#define VERSION "2.01b"
 
 /*
  * We cache the standard frame sizes here to save us time and
@@ -46,6 +46,8 @@
 
 #define BPF_FILTER_PORTRANGE    " and ( portrange %s)"
 #define BPF_MAIN_PORTRANGE_FILTER    BPF_FILTER_IP BPF_FILTER_PORTRANGE
+
+#define BPF_DEFRAGMENTION_FILTER BPF_MAIN_PORTRANGE_FILTER " or (udp and ip[6:2] & 0x3fff != 0)"
 
 #define WORD_REGEX "((^%s\\W)|(\\W%s$)|(\\W%s\\W))"
 
@@ -95,6 +97,9 @@
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
+#define DURATION_SPLIT 1
+#define FILESIZE_SPLIT 2
+
 /*
  * Single-char packet "ident" flags.
  */
@@ -135,6 +140,8 @@ char *get_filter_from_string(char *);
 char *get_filter_from_argv  (char **);
 char *get_filter_from_portrange(char *);
 
+void create_dump(unsigned int now);
+
 /* Call ID extract */
 int extract_callid(char *msg, int len);
 
@@ -143,6 +150,11 @@ uint8_t strishex(char *);
 
 void update_windowsize(int32_t);
 void drop_privs(void);
+
+int parse_stop_request(char *request);
+int parse_split_request(char *request);
+int check_split_deadline(unsigned int now);
+int check_exit_deadline(unsigned int now);
 
 
 struct SIPGREP_rtaphdr_t {

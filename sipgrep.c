@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -40,6 +41,7 @@
 #if defined(OSF1)
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <net/route.h>
@@ -52,6 +54,7 @@
 #if defined(LINUX)
 #include <getopt.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
@@ -62,6 +65,7 @@
 #if defined(AIX)
 #include <sys/machine.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <time.h>
 #include <unistd.h>
@@ -102,15 +106,10 @@
 #endif
 
 #include <pcre.h>
-
 #include "core_hep.h"
 #include "sipgrep.h"
 #include "sipparse.h"
 
-
-
-
-static char rcsver[] = "$Revision: 2.00 $";
 
 /*
  * Configuration Options
@@ -167,7 +166,7 @@ pcap_t *pd = NULL;
 pcap_dumper_t *pd_dump = NULL;
 struct bpf_program pcapfilter;
 struct in_addr net, mask;
-
+int file_counter = 0;
 /*
  * Timestamp/delay functionality
  */
@@ -194,12 +193,16 @@ uint8_t use_color = 1, enable_dialog_remove = 1, print_report = 0, kill_friendly
 int homer_sock = 0, use_homer = 0;
 
 /* kill time */
-int stop_working = 0;
-/* default friendly scanner UAC */
-char *friendly_scanner_uac = "friendly-scanner";
+unsigned int stop_working_value = 0, split_deadline = 0, write_deadline = 0, stop_working_type = 0, split_file_value = 0, split_file_type = 0;
 
 /* time to remove */
 unsigned int time_dialog_remove = 0;
+
+/* start time */
+unsigned int start_time = 0;
+
+/* default friendly scanner UAC */
+char *friendly_scanner_uac = "friendly-scanner";
 
 int main(int argc, char **argv) {
     int32_t c;
@@ -209,8 +212,9 @@ int main(int argc, char **argv) {
 
     /* default timestamp */
     print_time = &print_time_absolute;
+        
     
-    while ((c = getopt(argc, argv, "aNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:")) != EOF) {
+    while ((c = getopt(argc, argv, "aNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:Q:")) != EOF) {
         switch (c) {
 
             case 'F':
@@ -223,7 +227,18 @@ int main(int argc, char **argv) {
                 reasm_enable = 1;
                 break;                
             case 'q':
-                stop_working = atoi(optarg) + (unsigned)time(NULL);
+                if(parse_stop_request(optarg) != 0) {
+                    usage(-1);
+                    exit;                                  
+                }
+                break;                
+            case 'Q':
+                if(parse_split_request(optarg) != 0) {
+                    usage(-1);
+                    exit;                                  
+                }
+                /* we should keep our priv. to rotate files */
+                dont_dropprivs = 1;
                 break;                
             case 'J':
                 kill_friendlyscanner = 1;                
@@ -326,6 +341,10 @@ int main(int argc, char **argv) {
         }
     }
     
+    
+    start_time = (unsigned)time(NULL);
+
+        
     if(use_homer) {
     
         if(!homer_capture_url || make_homer_socket(homer_capture_url)) {
@@ -545,10 +564,11 @@ int main(int argc, char **argv) {
     }
 
     if (dump_file) {
+
         if (!(pd_dump = pcap_dump_open(pd, dump_file))) {
             fprintf(stderr, "fatal: %s\n", pcap_geterr(pd));
             clean_exit(-1);
-        } else printf("output: %s\n", dump_file);
+        } else printf("output: %s\n", dump_file);        
     }
 
     update_windowsize(0);
@@ -570,6 +590,61 @@ int main(int argc, char **argv) {
 
     /* NOT REACHED */
     return 0;
+}
+
+void create_dump(unsigned int now) {
+
+    struct tm *t;
+    char file_ts[256];
+    char *file_ext = NULL;
+    unsigned int len = 0;
+   
+    if(!dump_file) return;
+
+    if(check_split_deadline(now) == 0) {
+        /* do close and create a new one*/
+        if (pd_dump) {
+            pcap_dump_flush(pd_dump);
+            pcap_dump_close(pd_dump);
+        }
+        else {
+            fprintf(stderr, "fatal: file not opened\n");
+            clean_exit(-1);
+        }
+        
+        /* set counter */
+        file_counter++;
+        
+        printf("JAOP1!\n");
+        
+        time_t epoch_time_as_time_t = write_deadline;
+
+        t = localtime(&epoch_time_as_time_t);
+
+        len = strlen(dump_file);
+    
+        printf("JAOP2!\n");
+        
+        if(file_ext = strrchr(dump_file, '.')) {            
+            if(file_ext == dump_file) file_ext = NULL;
+            else len -= strlen(file_ext);        
+        }        
+    
+        printf("JAOP!%d\n",len);
+    
+        snprintf(file_ts, 256, "%.*s_%06d_%02u%02u%02u%02u%02u%02u%s",
+           len, dump_file, file_counter, t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour,
+           t->tm_min, t->tm_sec, file_ext ? file_ext : ".pcap");
+
+        if((len = rename(dump_file, file_ts)) != 0) {         
+             fprintf(stderr, "unable to rename the file '%s' to '%s' %d\n", dump_file, file_ts, len);
+        }        
+               
+        if (!(pd_dump = pcap_dump_open(pd, dump_file))) {
+            fprintf(stderr, "fatal: %s\n", pcap_geterr(pd));
+            clean_exit(-1);
+        } else printf("output: %s\n", dump_file);	
+    }
 }
 
 void process(u_char *d, struct pcap_pkthdr *h, u_char *p) {
@@ -777,13 +852,113 @@ void process(u_char *d, struct pcap_pkthdr *h, u_char *p) {
 
     }
 
-
-
     if (max_matches && matches >= max_matches)
         clean_exit(0);
 
     if (match_after && keep_matching)
         keep_matching--;
+}
+
+int parse_stop_request(char *request) {
+
+        if(!strncmp(request, "duration:",  9)) {
+            stop_working_type = DURATION_SPLIT;        
+        }
+        else if(!strncmp(request, "filesize:",  9)) {
+            stop_working_type = FILESIZE_SPLIT;        
+        }        
+        else goto error;
+
+        if((stop_working_value = atoi(request+9)) > 0) return 0;        
+                                        
+    error:
+        printf("bad format, should be 'duration:NUM' or 'filesize:NUM'\n");
+        return -1;
+        
+}
+
+int parse_split_request(char *request) {
+
+        if(!strncmp(request, "duration:", 9)) {
+            split_file_type = DURATION_SPLIT;        
+        }
+        else if(!strncmp(request, "filesize:", 9)) {
+            split_file_type = FILESIZE_SPLIT;        
+        }
+        else goto error;
+                
+        if((split_file_value = atoi(request+9)) > 0) { 
+            write_deadline = split_file_value + (unsigned)time(NULL);            
+            return 0;            
+        }
+            
+    error:
+        printf("bad format, should be 'duration:NUM' or 'filesize:NUM'\n");
+        return -1;
+        
+}
+
+
+int check_split_deadline(unsigned int now) {
+
+     struct stat st;
+     
+     switch(split_file_type) {
+    
+         case DURATION_SPLIT: {
+              if(now >= write_deadline) {
+                  //printf("Timeout arrived. make new file...\n");
+                  write_deadline += split_file_value;
+                  return 0;
+              }                                                
+              break;
+         };
+         
+         case FILESIZE_SPLIT:{
+               stat(dump_file, &st);
+               int size = st.st_size;
+               if(size >= split_file_value*1024) {
+                   //printf("file size is [%d]. split file ...\n", split_file_value);
+                   return 0;
+               }
+               break;
+         };
+           
+         default: 
+                 break;
+    }
+
+    return -1;
+}
+
+int check_exit_deadline(unsigned int now) {
+
+    struct stat st;
+    
+    switch(stop_working_type) {
+    
+         case DURATION_SPLIT: {
+              if(now >= (stop_working_value + start_time)) {
+                  printf("Timeout arrived. go to exit...\n");
+                  return 0;
+              }                                                
+              break;
+         };
+         
+         case FILESIZE_SPLIT:{
+               stat(dump_file, &st);
+               int size = st.st_size;
+               if(size >= (stop_working_value*1024)) {
+                   printf("file size is [%d]. go to exit...\n", stop_working_value);
+                   return 0;
+               }
+               break;
+         };   
+         default: 
+                 break;
+    }
+
+    return -1;    
 }
 
 void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char *data, uint32_t len,
@@ -797,9 +972,8 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
     char callid[256];
     rc_info_t *rcinfo = NULL;
     int now = (unsigned) time(NULL);
-    
-    if(stop_working > 0 && now >= stop_working) {
-        printf("Timeout arrived. Exit...\n");
+        
+    if(check_exit_deadline(now) == 0) {
         clean_exit(0);
         return;
     }
@@ -1133,8 +1307,14 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
     if (quiet < 3)
         dump_func(data, len);
 
-    if (pd_dump)
+    if (pd_dump){
+        /* check rotation */
+        create_dump(now);
+        
         pcap_dump((u_char*)pd_dump, h, p);
+        pcap_dump_flush(pd_dump);
+
+    }
 }
 
 int8_t re_match_func(unsigned char *data, uint32_t len) {
@@ -1337,12 +1517,12 @@ char *get_filter_from_portrange(char *str) {
         if (*s == '\r' || *s == '\n')
             *s = ' ';
 
-    if (!(mine = (char*)malloc(len + sizeof(BPF_MAIN_PORTRANGE_FILTER))))
+    if (!(mine = (char*)malloc(len + (reasm_enable ? sizeof(BPF_DEFRAGMENTION_FILTER) : sizeof(BPF_MAIN_PORTRANGE_FILTER)))))
         return NULL;
 
-    memset(mine, 0, len + sizeof(BPF_MAIN_PORTRANGE_FILTER));
+    memset(mine, 0, len + (reasm_enable ? sizeof(BPF_DEFRAGMENTION_FILTER) : sizeof(BPF_MAIN_PORTRANGE_FILTER)));
 
-    sprintf(mine, BPF_MAIN_PORTRANGE_FILTER, str);
+    sprintf(mine, (reasm_enable ? BPF_DEFRAGMENTION_FILTER : BPF_MAIN_PORTRANGE_FILTER), str);
 
     return mine;
 }
@@ -1507,14 +1687,15 @@ void usage(int8_t e) {
     printf("usage: sipgrep <-"
            "ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
            "             <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>\n"
-           "		 <-f from user>  <-t to user> <-H capture url> <-q seconds>\n"
-           "             <-P portrange> <-F file> <match expression> <bpf filter>\n"
+           "		 <-f from user>  <-t to user> <-H capture url> <-q autostop cond.>\n"
+           "		 <-Q split cond.> <-P portrange> <-F file>\n"
+           "		 <match expression> <bpf filter>\n"
            "   -h  is help/usage\n"
            "   -V  is version information\n"
            "   -e  is show empty packets\n"
            "   -i  is ignore case\n"
            "   -v  is invert match\n"
-           "   -R  is don't do privilege revocation logic\n"
+           "   -R  is not do privilege revocation logic\n"
            "   -w  is word-regex (expression must match as a word)\n"
            "   -p  is don't go into promiscuous mode\n"
            "   -l  is make stdout line buffered\n"
@@ -1539,8 +1720,13 @@ void usage(int8_t e) {
            "   -G  is print dialog report during clean up\n"
            "   -J  is kill friendly scanner automatically\n"
            "   -j  is kill friendly scanner automatically matching user agent string\n"
-           "   -q  is close sipgrep after some time\n"
-           "   -a  is enable reasembling\n"
+           "   -q  is auto stop condition:\n"
+           "    	duration:NUM - stop after NUM seconds\n"
+           "    	filesize:NUM - stop this file after NUM KB\n"
+           "   -Q  is pcap_dump split condition:\n"
+           "    	duration:NUM - switch to next file after NUM secs\n"
+           "    	filesize:NUM - switch to next file after NUM KB\n"           
+           "   -a  is enable packet re-assemblation\n"
            "   -P  is use specified portrange instead of default 5060-5061\n"
            "   -d  is use specified device instead of the pcap default\n"
            "");
@@ -1550,7 +1736,7 @@ void usage(int8_t e) {
 
 
 void version(void) {
-    printf("sipgrep: V%s, %s\n", VERSION, rcsver);
+    printf("sipgrep: V%s\n", VERSION);
     exit(0);
 }
 
