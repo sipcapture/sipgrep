@@ -42,20 +42,21 @@ make && make install
 ```
 ./sipgrep  -V
 
-sipgrep: V2.00, $Revision: 2.00 $
+sipgrep: V2.01b
 
 ./sipgrep -h
 
 usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A num>
              <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>
-	     <-f from user>  <-t to user> <-H capture url> <-q seconds>
-             <-P portrange> <-F file> <match expression> <bpf filter>
+                 <-f from user>  <-t to user> <-H capture url> <-q autostop cond.>
+                 <-Q split cond.> <-P portrange> <-F file>
+                 <match expression> <bpf filter>
    -h  is help/usage
    -V  is version information
    -e  is show empty packets
    -i  is ignore case
    -v  is invert match
-   -R  is don't do privilege revocation logic
+   -R  is not do privilege revocation logic
    -w  is word-regex (expression must match as a word)
    -p  is don't go into promiscuous mode
    -l  is make stdout line buffered
@@ -80,8 +81,13 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A 
    -G  is print dialog report during clean up
    -J  is kill friendly scanner automatically
    -j  is kill friendly scanner automatically matching user agent string
-   -q  is close sipgrep after some time
-   -a  is enable reasembling
+   -q  is auto stop condition:
+        duration:NUM - stop after NUM seconds
+        filesize:NUM - stop this file after NUM KB
+   -Q  is pcap_dump split condition:
+        duration:NUM - switch to next file after NUM secs
+        filesize:NUM - switch to next file after NUM KB
+   -a  is enable packet re-assemblation
    -P  is use specified portrange instead of default 5060-5061
    -d  is use specified device instead of the pcap default
 
@@ -115,8 +121,19 @@ sipgrep -j sipvicious
 #Display dialogs and duplicate all traffic to HOMER sipcapture in HEPv3
 sipgrep -f 23333 -H udp:10.0.0.1:9061
 
+#collect all Calls/Regisrations untill pcap_dump smaller than 20 KB.
+sipgrep -q 'filesize:20' -O sipgrep.pcap
+
 #collect all Calls/Regisrations dialogs during 120 seconds, print reports and exit.
-sipgrep -g -G -q 120
+sipgrep -g -G -q 'duration:120'
+
+#split pcap_dump to 20 KB files in sipgrep_INDEX_YYYYMMDDHHMM.pcap
+sipgrep -Q 'filesize:20' -O sipgrep.pcap
+
+#split pcap_dump in sipgrep_INDEX_YYYYMMDDHHMM.pcap each 120 seconds
+sipgrep -Q 'duration:120' -O sipgrep.pcap
+
+
 
 
 ```
