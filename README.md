@@ -56,7 +56,7 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A 
    -e  is show empty packets
    -i  is ignore case
    -v  is invert match
-   -R  is not do privilege revocation logic
+   -R  is don't do privilege revocation logic
    -w  is word-regex (expression must match as a word)
    -p  is don't go into promiscuous mode
    -l  is make stdout line buffered
