@@ -193,7 +193,7 @@ uint8_t use_color = 1, enable_dialog_remove = 1, print_report = 0, kill_friendly
 int homer_sock = 0, use_homer = 0;
 
 /* kill time */
-unsigned int stop_working_value = 0, split_deadline = 0, write_deadline = 0, stop_working_type = 0, split_file_value = 0, split_file_type = 0;
+unsigned int stop_working_value = 0, write_deadline = 0, stop_working_type = 0, split_file_value = 0, split_file_type = 0;
 
 /* time to remove */
 unsigned int time_dialog_remove = 0;
@@ -344,6 +344,12 @@ int main(int argc, char **argv) {
     
     start_time = (unsigned)time(NULL);
 
+    /* missed -O flag for -q filessize or SPLIT FILE types */
+    if((stop_working_type == FILESIZE_SPLIT || split_file_type != 0) && !dump_file) {
+        fprintf(stderr, "-O parameter missed\n");
+        usage(-1);
+        exit;                            
+    }
         
     if(use_homer) {
     
