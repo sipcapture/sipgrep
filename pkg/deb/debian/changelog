@@ -1,5 +1,5 @@
-sipgrep (2.0.0~dev) UNRELEASED; urgency=low
+sipgrep (2.0.0) unstable; urgency=low
 
   * Initial version
 
- -- Victor Seva <linuxmaniac@torreviejawireless.org>  Fri, 28 Mar 2014 15:42:58 +0100
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Mon, 31 Mar 2014 08:34:33 +0200
