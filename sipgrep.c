@@ -621,22 +621,17 @@ void create_dump(unsigned int now) {
         /* set counter */
         file_counter++;
         
-        printf("JAOP1!\n");
-        
         time_t epoch_time_as_time_t = write_deadline;
 
         t = localtime(&epoch_time_as_time_t);
 
         len = strlen(dump_file);
     
-        printf("JAOP2!\n");
-        
         if(file_ext = strrchr(dump_file, '.')) {            
             if(file_ext == dump_file) file_ext = NULL;
             else len -= strlen(file_ext);        
         }        
     
-        printf("JAOP!%d\n",len);
     
         snprintf(file_ts, 256, "%.*s_%06d_%02u%02u%02u%02u%02u%02u%s",
            len, dump_file, file_counter, t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour,
