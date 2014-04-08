@@ -451,7 +451,7 @@ int main(int argc, char **argv) {
     if(sip_to_filter && sip_from_filter) {
 
         custom_filter = malloc(strlen(sip_to_filter) + strlen(sip_from_filter) + strlen(SIP_FROM_TO_MATCH));
-        sprintf(custom_filter, SIP_FROM_MATCH, sip_from_filter, sip_to_filter);
+        sprintf(custom_filter, SIP_FROM_TO_MATCH, sip_from_filter, sip_to_filter);
         match_data = custom_filter;                                                
     }
     else if(sip_from_filter) {
