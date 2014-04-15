@@ -1689,7 +1689,7 @@ void drop_privs(void) {
 
 void usage(int8_t e) {
     printf("usage: sipgrep <-"
-           "ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
+           "ahNViwgGJpevxlDTRMmqCJjx> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
            "             <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>\n"
            "		 <-f from user>  <-t to user> <-H capture url> <-q autostop cond.>\n"
            "		 <-Q split cond.> <-P portrange> <-F file>\n"
@@ -1698,6 +1698,7 @@ void usage(int8_t e) {
            "   -V  is version information\n"
            "   -e  is show empty packets\n"
            "   -i  is ignore case\n"
+           "   -x  is disable bad parsing notification\n"
            "   -v  is invert match\n"
            "   -R  is don't do privilege revocation logic\n"
            "   -w  is word-regex (expression must match as a word)\n"
