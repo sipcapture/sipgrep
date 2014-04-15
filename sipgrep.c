@@ -1023,7 +1023,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
          /* SIP parse */                        
 
          if(!parse_request((unsigned char*)data, len, &psip)) {        
-             printf("BAD PARSING");             
+             printf("bad sip message or too short : Len: [%d] Data: [%.*s]\n", len, len, data);             
              return;
          }
          
