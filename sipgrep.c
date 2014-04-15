@@ -122,7 +122,7 @@ uint8_t  re_match_word = 0, re_ignore_case = 0, re_multiline_match = 1;
 uint8_t  show_empty = 0, show_proto = 0, quiet = 1;
 uint8_t  invert_match = 0;
 uint8_t  live_read = 1, want_delay = 0;
-uint8_t  dont_dropprivs = 0;
+uint8_t  dont_dropprivs = 0, ignore_bad_sip = 0;
 
 char *read_file = NULL, *dump_file = NULL;
 char *usedev = NULL;
@@ -214,9 +214,12 @@ int main(int argc, char **argv) {
     print_time = &print_time_absolute;
         
     
-    while ((c = getopt(argc, argv, "aNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:Q:")) != EOF) {
+    while ((c = getopt(argc, argv, "axNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:Q:")) != EOF) {
         switch (c) {
 
+	    case 'x':
+	        ignore_bad_sip = 1;
+	        break;
             case 'F':
                 filter_file = optarg;
                 break;
@@ -1023,7 +1026,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
          /* SIP parse */                        
 
          if(!parse_request((unsigned char*)data, len, &psip)) {        
-             printf("bad sip message or too short : Len: [%d] Data: [%.*s]\n", len, len, data);             
+             if(!ignore_bad_sip) printf("bad sip message or too short : Len: [%d] Data: [%.*s]\n", len, len, data);             
              return;
          }
          
