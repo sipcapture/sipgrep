@@ -56,7 +56,7 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
               
 
 	if (blen <= 100 ) {
-                printf("ERROR: parse_first_line: message too short: %ui\n", blen);
+                //printf("ERROR: parse_first_line: message too short: %ui\n", blen);
 		return 0;
         }
                 
