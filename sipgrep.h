@@ -155,6 +155,7 @@ int parse_stop_request(char *request);
 int parse_split_request(char *request);
 int check_split_deadline(unsigned int now);
 int check_exit_deadline(unsigned int now);
+void mass_friendlyscanner_kill(char *data);
 
 
 struct SIPGREP_rtaphdr_t {
