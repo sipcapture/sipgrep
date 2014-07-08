@@ -1286,11 +1286,11 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
     if ((proto == IPPROTO_TCP || proto == IPPROTO_UDP) && (sport || dport) && (hdr_offset || frag_offset == 0))
 
-        printf("%s:%u -> %s:%u", ip_src, sport, ip_dst, dport);
+        printf("%s:%u -> %s:%u\n", ip_src, sport, ip_dst, dport);
 
     else
 
-        printf("%s -> %s", ip_src, ip_dst);
+        printf("%s -> %s\n", ip_src, ip_dst);
 
     if (proto == IPPROTO_TCP && flags)
         printf(" [%s%s%s%s%s%s%s%s]",
