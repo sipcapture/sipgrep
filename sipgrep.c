@@ -1062,16 +1062,16 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                        switch(psip.reply/100) {
                          
                              case 1:
-                                  if(psip.reply == 180) s->cdr_ringing = (unsigned)time(NULL);
+                                  if(psip.reply >= 180) s->cdr_ringing = h->ts.tv_sec;
                                   break;                             
                              case 2:                                    
-                                  s->cdr_connect = (unsigned)time(NULL);
+                                  s->cdr_connect = h->ts.tv_sec;
                                   break;                                                                 
                              case 3:    
                                   if(psip.reply == 386) {
                                       s->terminated = CALL_MOVED_TERMINATION;
                                       s->termination_reason = psip.reply;
-                                      s->cdr_disconnect = (unsigned)time(NULL);
+                                      s->cdr_disconnect = h->ts.tv_sec;
                                   }
                                   break;
                              case 4:                                    
@@ -1079,17 +1079,17 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                                   if(psip.reply == 401 || psip.reply == 407) s->terminated = CALL_AUTH_TERMINATION;
                                   else if(psip.reply == 487)  s->terminated = CALL_CANCEL_TERMINATION;                              
                                   else s->terminated = CALL_4XX_TERMINATION ;                                                                        
-                                  s->cdr_disconnect = (unsigned)time(NULL);
+                                  s->cdr_disconnect = h->ts.tv_sec;
                                   break; 
                              case 5:    
                                   s->termination_reason = psip.reply;
                                   s->terminated = CALL_5XX_TERMINATION;    
-                                  s->cdr_disconnect = (unsigned)time(NULL);                              
+                                  s->cdr_disconnect = h->ts.tv_sec;
                                   break;                         
                              case 6:                                
                                   s->termination_reason = psip.reply;                                                               
                                   s->terminated = CALL_6XX_TERMINATION;
-                                  s->cdr_disconnect = (unsigned)time(NULL);
+                                  s->cdr_disconnect = h->ts.tv_sec;
                                   break;                                             
                              default:
                                 break;                                          
@@ -1101,7 +1101,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                         switch(psip.reply/100) {
                          
                              case 2:
-                                  s->cdr_connect = (unsigned)time(NULL);                                  
+                                  s->cdr_connect = h->ts.tv_sec;
                                   s->terminated = REGISTRATION_200_TERMINATION;
                                   s->termination_reason = psip.reply;
                                   s->registered = 1;
@@ -1111,17 +1111,17 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                                 s->termination_reason = psip.reply;
                                 if(psip.reply == 401 || psip.reply == 407) s->terminated = CALL_AUTH_TERMINATION;
                                 else s->terminated = CALL_4XX_TERMINATION ;
-                                s->cdr_disconnect = (unsigned)time(NULL);
+                                s->cdr_disconnect = h->ts.tv_sec;
                                 break;                                                                                             
                              case 5:    
                                 s->termination_reason = psip.reply;
                                 s->terminated = CALL_5XX_TERMINATION ;
-                                s->cdr_disconnect = (unsigned)time(NULL);
+                                s->cdr_disconnect = h->ts.tv_sec;
                                 break;                         
                              case 6:                                
                                 s->termination_reason = psip.reply;
                                 s->terminated = REGISTRATION_6XX_TERMINATION ;
-                                s->cdr_disconnect = (unsigned)time(NULL);
+                                s->cdr_disconnect = h->ts.tv_sec;
                                 break;     
                             default:
                                 break;                                                  
@@ -1140,7 +1140,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                             if(s->terminated != 0) delete_dialogs_remove_element(callid);                            
                        
                             s->init_cseq = psip.cseq_num; 
-                            s->cdr_init = (unsigned)time(NULL);
+                            s->cdr_init = h->ts.tv_sec;
                             s->cdr_ringing = 0;
                             s->cdr_connect = 0;
                             s->cdr_disconnect = 0;                                                                           
@@ -1153,7 +1153,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                        if(s->init_cseq < psip.cseq_num) {                                              
 
                             s->init_cseq = psip.cseq_num;                                                       
-                            s->cdr_init = (unsigned)time(NULL);
+                            s->cdr_init = h->ts.tv_sec;
                             s->cdr_ringing = 0;
                             s->cdr_connect = 0;
                             s->cdr_disconnect = 0;    
@@ -1164,13 +1164,13 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                   }
                   else if(!strcmp(psip.method, BYE_METHOD)) {
                   
-                       s->cdr_disconnect = (unsigned)time(NULL);                                                                                    
+                       s->cdr_disconnect = h->ts.tv_sec;
                        s->terminated = CALL_BYE_TERMINATION;  
                        s->termination_reason = 900;
                   }
                   else if(!strcmp(psip.method, CANCEL_METHOD)) {
                   
-                       s->cdr_disconnect = (unsigned)time(NULL);                                                                                    
+                       s->cdr_disconnect = h->ts.tv_sec;
                        s->terminated = CALL_CANCEL_TERMINATION;                       
                   }                      
            }           
@@ -1222,7 +1222,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                        
                        s->transaction = INVITE_TRANSACTION;
                        s->init_cseq = psip.cseq_num;
-                       s->cdr_init = (unsigned)time(NULL);;
+                       s->cdr_init = h->ts.tv_sec;
                        s->cdr_ringing = 0;
                        s->cdr_connect = 0;
                        s->cdr_disconnect = 0;                                                                           
@@ -1240,7 +1240,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                        s->transaction = REGISTER_TRANSACTION;
                        s->init_cseq = psip.cseq_num;                                
                        
-                       s->cdr_init = (unsigned)time(NULL);;
+                       s->cdr_init = h->ts.tv_sec;
                        s->cdr_ringing = 0;
                        s->cdr_connect = 0;
                        s->cdr_disconnect = 0;     
