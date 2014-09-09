@@ -1055,7 +1055,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
          if (s) {
 
-           if(psip.is_method == SIP_REPLY) {
+           if(psip.is_method == SIP_REPLY) { // SIP RESPONSE
                   
                   if(!strcmp(psip.cseq_method, INVITE_METHOD)) {
                                               

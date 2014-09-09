@@ -83,6 +83,7 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
         }
 
         psip->reply = 0;
+        memset(psip->reason, 0, sizeof(psip->reason));
         psip->has_totag = 0;
 
         tmp = (char *) body;
@@ -90,6 +91,13 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
         if(!strncmp("SIP/2.0 ", tmp, 8)) {
                 psip->reply = atoi(tmp+8);
                 psip->is_method = SIP_REPLY;
+                unsigned char *reason = tmp+12;
+                for (; *reason; reason++) {
+                        if (*reason == '\n' && *(reason-1) == '\r') {
+                                break;
+                        }
+                }
+                strncpy(psip->reason, tmp+12, reason-(tmp+12));
                 
 	}
         else {
@@ -99,7 +107,13 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                 else if(!strncmp(tmp, INVITE_METHOD, INVITE_LEN)) psip->method = INVITE_METHOD;
                 else if(!strncmp(tmp, BYE_METHOD, BYE_LEN)) psip->method = BYE_METHOD;
                 else if(!strncmp(tmp, CANCEL_METHOD, CANCEL_LEN)) psip->method = CANCEL_METHOD;
-                else psip->method = UNKNOWN_METHOD;
+                else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;
+                else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
+                else
+                	{
+                		printf("UNKNOW METHOD: %s", tmp);
+                		psip->method = UNKNOWN_METHOD;
+                	}
 	}
 	
         c=body+offset;
@@ -159,7 +173,16 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                                             psip->transaction = CANCEL_TRANSACTION;                                                                          
                                             psip->cseq_method = CANCEL_METHOD; 
                                       }
+                                      else if(!strncmp(pch, NOTIFY_METHOD, NOTIFY_LEN)) {
+                                            psip->transaction = NOTIFY_TRANSACTION;
+                                            psip->cseq_method = NOTIFY_METHOD;
+                                      }
+                                      else if(!strncmp(pch, OPTIONS_METHOD, OPTIONS_LEN)) {
+                                            psip->transaction = OPTIONS_TRANSACTION;
+                                            psip->cseq_method = OPTIONS_METHOD;
+                                      }
                                       else {
+                                    	    printf("UNKNOW METHOD: %s", pch);
                                             psip->transaction = UNKNOWN_TRANSACTION;
                                             psip->cseq_method = UNKNOWN_METHOD;
                                       }                                                                

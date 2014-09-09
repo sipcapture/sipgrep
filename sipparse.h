@@ -44,6 +44,8 @@
 #define UPDATE_LEN 6
 #define REFER_LEN 5
 #define PUBLISH_LEN 7
+#define NOTIFY_LEN 6
+#define OPTIONS_LEN 7
 #define UAC_LEN 10
 
 #define INVITE_METHOD "INVITE"
@@ -60,6 +62,8 @@
 #define UPDATE_METHOD "UPDATE"
 #define REFER_METHOD "REFER"
 #define PUBLISH_METHOD "PUBLISH"
+#define NOTIFY_METHOD "NOTIFY"
+#define OPTIONS_METHOD "OPTIONS"
 #define UNKNOWN_METHOD "UNKNOWN"
 
 
@@ -78,6 +82,8 @@
 #define REGISTER_TRANSACTION 2
 #define BYE_TRANSACTION 3
 #define CANCEL_TRANSACTION 4
+#define NOTIFY_TRANSACTION 5
+#define OPTIONS_TRANSACTION 6
 #define UNKNOWN_TRANSACTION 10
 
 
@@ -109,6 +115,7 @@ typedef struct preparsed_sip {
       unsigned int has_totag;      
       char *method;
       char *cseq_method;
+      char reason[32];
       str callid;
       str cseq;
       str from;
