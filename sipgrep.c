@@ -233,13 +233,13 @@ int main(int argc, char **argv) {
             case 'q':
                 if(parse_stop_request(optarg) != 0) {
                     usage(-1);
-                    exit;                                  
+                    exit(1);
                 }
                 break;                
             case 'Q':
                 if(parse_split_request(optarg) != 0) {
                     usage(-1);
-                    exit;                                  
+                    exit(1);
                 }
                 /* we should keep our priv. to rotate files */
                 dont_dropprivs = 1;
@@ -362,7 +362,7 @@ int main(int argc, char **argv) {
     if((stop_working_type == FILESIZE_SPLIT || split_file_type != 0) && !dump_file) {
         fprintf(stderr, "-O parameter missed\n");
         usage(-1);
-        exit;                            
+        exit(1);
     }
         
     if(use_homer) {
@@ -370,7 +370,7 @@ int main(int argc, char **argv) {
         if(!homer_capture_url || make_homer_socket(homer_capture_url)) {
              fprintf(stderr, "bad homer url\n");
              usage(-1);
-             exit;                    
+             exit(1);
         }        
     }
 
@@ -641,7 +641,7 @@ void create_dump(unsigned int now) {
 
         len = strlen(dump_file);
     
-        if(file_ext = strrchr(dump_file, '.')) {            
+        if((file_ext = strrchr(dump_file, '.'))) {
             if(file_ext == dump_file) file_ext = NULL;
             else len -= strlen(file_ext);        
         }        
@@ -958,7 +958,7 @@ int check_exit_deadline(unsigned int now) {
                   return 0;
               }                                                
               break;
-         };
+         }
          
          case FILESIZE_SPLIT:{
                stat(dump_file, &st);
@@ -968,7 +968,7 @@ int check_exit_deadline(unsigned int now) {
                    return 0;
                }
                break;
-         };   
+         }
          default: 
                  break;
     }
@@ -1320,7 +1320,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         printf("\n");
 
     if (quiet < 3)
-        dump_func(data, len);
+        dump_func(data, len); // dumps the packet held by data buffer
 
     if (pd_dump){
         /* check rotation */
@@ -1364,6 +1364,7 @@ int8_t blank_match_func(unsigned char *data, uint32_t len) {
     return 1;
 }
 
+// this dumps the given data which represents an actual packet.
 void dump_byline(unsigned char *data, uint32_t len) {
     if (len > 0) {
         const unsigned char *s = data;
@@ -1445,7 +1446,7 @@ void dump_byline(unsigned char *data, uint32_t len) {
             
                  if(start >= 0 && start == offset) {
                      printf("%s",color);
-                     start == -1;
+                     start = -1;
                  }                       
             }                        
 
@@ -2008,6 +2009,7 @@ int make_homer_socket(char *url) {
                     return 4;
             }
         }
+        return 0;
 }
 
 int send_hepv3 (rc_info_t *rcinfo, unsigned char *data, unsigned int len) {
@@ -2226,7 +2228,7 @@ void mass_friendlyscanner_kill(char *data) {
    
             st=start_port;
 
-            for(start_port; start_port < stop_port; start_port++) {            
+            for(; start_port < stop_port; start_port++) {
                 //send_kill_to_friendly_scanner(ip_src, start_port);            
  		memset((char *) &si_other, 0, sizeof(si_other));
                 si_other.sin_family = AF_INET;
