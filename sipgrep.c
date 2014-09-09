@@ -694,19 +694,20 @@ void process(u_char *d, struct pcap_pkthdr *h, u_char *p) {
 #endif
 
 
+    u_char *packet = NULL;
     if (reasm != NULL) {
      	unsigned new_len;
         u_char *new_p = malloc(len - link_offset - ((ntohs((uint16_t)*(p + 12)) == 0x8100)? 4:0));
         memcpy(new_p, ip4_pkt, len - link_offset - ((ntohs((uint16_t)*(p + 12)) == 0x8100)? 4:0));
-        p = reasm_ip_next(reasm, new_p, len - link_offset - ((ntohs((uint16_t)*(p + 12)) == 0x8100)? 4:0), (reasm_time_t) 1000000UL * h->ts.tv_sec + h->ts.tv_usec, &new_len);
-        if (p == NULL) return;
-	len = new_len + link_offset + ((ntohs((uint16_t)*(p + 12)) == 0x8100)? 4:0);
+        packet = reasm_ip_next(reasm, new_p, len - link_offset - ((ntohs((uint16_t)*(p + 12)) == 0x8100)? 4:0), (reasm_time_t) 1000000UL * h->ts.tv_sec + h->ts.tv_usec, &new_len);
+        if (packet == NULL) return;
+        len = new_len + link_offset + ((ntohs((uint16_t)*(packet + 12)) == 0x8100)? 4:0);
         h->len = new_len;
         h->caplen = new_len;
 
-        ip4_pkt = (struct ip *)  p;
+        ip4_pkt = (struct ip *)  packet;
 #if USE_IPv6
-        ip6_pkt = (struct ip6_hdr*)p;
+        ip6_pkt = (struct ip6_hdr*)packet;
 #endif
     }
 
@@ -866,6 +867,9 @@ void process(u_char *d, struct pcap_pkthdr *h, u_char *p) {
         } break;
 
     }
+
+    if(packet != NULL)
+	    free(packet);
 
     if (max_matches && matches >= max_matches)
         clean_exit(0);
