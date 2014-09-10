@@ -57,9 +57,10 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
               
 
 	if (blen <= 100 ) {
-                //printf("ERROR: parse_first_line: message too short: %ui\n", blen);
+
+        printf("ERROR: parse_first_line: message too short: %ui\n", blen);
 		return 0;
-        }
+    }
                 
         c = body;
         last_offset = 0;
@@ -67,9 +68,13 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
 
         /* FIRST LINE */
         for (; *c; c++) {
-                if (*c == '\n' && *(c-1) == '\r') {       
-                        offset = (c +1) - body;
+                if (*c == '\n' && *(c-1) == '\r') {
+                        offset = (c + 1) - body;
                         break;
+                }
+                else if (c - body > blen) {
+                    printf("BAD Sip message: [%s]", body);
+                	return 0;
                 }
         }        
                         
@@ -91,6 +96,8 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
         if(!strncmp("SIP/2.0 ", tmp, 8)) {
                 psip->reply = atoi(tmp+8);
                 psip->is_method = SIP_REPLY;
+
+                // Extract Response code's reason
                 unsigned char *reason = tmp+12;
                 for (; *reason; reason++) {
                         if (*reason == '\n' && *(reason-1) == '\r') {
@@ -99,7 +106,7 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                 }
                 strncpy(psip->reason, tmp+12, reason-(tmp+12));
                 
-	}
+	    }
         else {
                 psip->is_method = SIP_REQUEST;
                 
@@ -114,14 +121,16 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                 else if(!strncmp(tmp, PUBLISH_METHOD, PUBLISH_LEN)) psip->method = PUBLISH_METHOD;
                 else
                 	{
+                	    int offset2 = 0;
 						unsigned char *c = tmp;
 						for (; *c; c++) {
 							if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
+								offset2 = c - tmp;
 								break;
 							}
 						}
 						char method[32] = {0};
-						strncpy(method, tmp, c-tmp);
+						strncpy(method, tmp, offset2);
 
 						printf("UNKNOWN METHOD: %s\n", method);
                 		psip->method = UNKNOWN_METHOD;
@@ -140,7 +149,7 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
        	                tmp = (char *) (body + last_offset);                                                                        
 
        	                /* BODY */                
-		        if((offset - last_offset) == 2) return 1;
+		        if((offset - last_offset) == 2) break; // Done parsing, bail out.
 
                         /* To tag */
 		        if((*tmp == 'T' && *(tmp+1) == 'o' && *(tmp+TO_LEN) == ':') || (*tmp == 't' && *(tmp+1) == ':')) {
@@ -206,14 +215,16 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                                             psip->cseq_method = PUBLISH_METHOD;
                                       }
                                       else {
+                                    	    int offset3 = 0;
                                             unsigned char *c = pch;
                                             for (; *c; c++) {
-                                            	if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
+                                            	if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-pch > 31) {
+                                            		offset3 = c-pch;
                                             		break;
                                             	}
                                             }
                                             char method[32] = {0};
-                                            strncpy(method, pch, c-pch);
+                                            strncpy(method, pch, offset3);
 
                                             printf("UNKNOWN METHOD: %s\n", method);
                                             psip->transaction = UNKNOWN_TRANSACTION;

@@ -1006,6 +1006,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
     /* SIP must have alpha  and it should be not be HEP */
     if(!isalpha(data[0]) || !strncmp(data, "HEP3", 4)) {
+    	      printf("Not a Sip message\n");
               return;
     }
 
