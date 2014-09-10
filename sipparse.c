@@ -110,9 +110,20 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                 else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;
                 else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
                 else if(!strncmp(tmp, ACK_METHOD, ACK_LEN)) psip->method = ACK_METHOD;
+                else if(!strncmp(tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) psip->method = SUBSCRIBE_METHOD;
+                else if(!strncmp(tmp, PUBLISH_METHOD, PUBLISH_LEN)) psip->method = PUBLISH_METHOD;
                 else
                 	{
-                		printf("UNKNOWN METHOD: %s", tmp);
+						unsigned char *c = tmp;
+						for (; *c; c++) {
+							if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
+								break;
+							}
+						}
+						char method[32] = {0};
+						strncpy(method, tmp, c-tmp);
+
+						printf("UNKNOWN METHOD: %s\n", method);
                 		psip->method = UNKNOWN_METHOD;
                 	}
 	}
@@ -186,8 +197,25 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                                             psip->transaction = ACK_TRANSACTION;
                                             psip->cseq_method = ACK_METHOD;
                                       }
+                                      else if(!strncmp(pch, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) {
+                                            psip->transaction = SUBSCRIBE_TRANSACTION;
+                                            psip->cseq_method = SUBSCRIBE_METHOD;
+                                      }
+                                      else if(!strncmp(pch, PUBLISH_METHOD, PUBLISH_LEN)) {
+                                            psip->transaction = PUBLISH_TRANSACTION;
+                                            psip->cseq_method = PUBLISH_METHOD;
+                                      }
                                       else {
-                                    	    printf("UNKNOWN METHOD: %s", pch);
+                                            unsigned char *c = pch;
+                                            for (; *c; c++) {
+                                            	if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
+                                            		break;
+                                            	}
+                                            }
+                                            char method[32] = {0};
+                                            strncpy(method, pch, c-pch);
+
+                                            printf("UNKNOWN METHOD: %s\n", method);
                                             psip->transaction = UNKNOWN_TRANSACTION;
                                             psip->cseq_method = UNKNOWN_METHOD;
                                       }                                                                

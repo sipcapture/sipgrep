@@ -1289,6 +1289,42 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                   else if(!strcmp(psip.method, ACK_METHOD)) {
                 	  // Nothing to do (for now)
                   }
+                  else if(!strcmp(psip.method, SUBSCRIBE_METHOD)) {
+                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
+                       snprintf(s->callid, 256, "%s", callid);
+
+                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+                       s->transaction = SUBSCRIBE_TRANSACTION;
+                       s->init_cseq = psip.cseq_num;
+
+                       s->cdr_init = h->ts.tv_sec;
+                       s->cdr_ringing = 0;
+                       s->cdr_connect = 0;
+                       s->cdr_disconnect = 0;
+                       s->terminated = 0;
+                       s->termination_reason = 0;
+                  }
+                  else if(!strcmp(psip.method, PUBLISH_METHOD)) {
+                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
+                       snprintf(s->callid, 256, "%s", callid);
+
+                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+                       s->transaction = PUBLISH_TRANSACTION;
+                       s->init_cseq = psip.cseq_num;
+
+                       s->cdr_init = h->ts.tv_sec;
+                       s->cdr_ringing = 0;
+                       s->cdr_connect = 0;
+                       s->cdr_disconnect = 0;
+                       s->terminated = 0;
+                       s->termination_reason = 0;
+                  }
 
                   if(s) HASH_ADD_STR( dialogs, callid, s );
                }	           
