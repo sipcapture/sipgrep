@@ -1057,7 +1057,8 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
          if (s) {
 
-           if(psip.is_method == SIP_REPLY) { // SIP RESPONSE
+           // Sip Message found, update hash table
+           if(psip.is_method == SIP_REPLY) { // This is a response
                   
                   if(!strcmp(psip.cseq_method, INVITE_METHOD)) {
                                               
@@ -1133,8 +1134,8 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
            /* REQUEST */
            else {
                                   
-                  if(!strcmp(psip.method, INVITE_METHOD)) {
-                       /* if new invite without totag */
+                  if(!strcmp(psip.method, INVITE_METHOD)) { // Re-Invite
+                       /* if new invite without to-tag */
                                              
                        if(psip.has_totag == 0 && s->init_cseq < psip.cseq_num) {                       
                                               
@@ -1206,7 +1207,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
     
     if(!s) {                  
 
-
+       // Sip Message not found, add it to hash table
        local_match = match_func(data, len);
        if(local_match == 1 || local_match != invert_match) {
                   
@@ -1284,6 +1285,9 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                        s->cdr_disconnect = 0;
                        s->terminated = 0;
                        s->termination_reason = 0;
+                  }
+                  else if(!strcmp(psip.method, ACK_METHOD)) {
+                	  // Nothing to do (for now)
                   }
 
                   if(s) HASH_ADD_STR( dialogs, callid, s );
@@ -1380,6 +1384,7 @@ int8_t re_match_func(unsigned char *data, uint32_t len) {
         case PCRE_ERROR_NOMEMORY:
             perror("she's dead, jim\n");
             clean_exit(-2);
+            break;
 
         case PCRE_ERROR_NOMATCH:
             return 0;

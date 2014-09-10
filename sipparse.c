@@ -109,9 +109,10 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                 else if(!strncmp(tmp, CANCEL_METHOD, CANCEL_LEN)) psip->method = CANCEL_METHOD;
                 else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;
                 else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
+                else if(!strncmp(tmp, ACK_METHOD, ACK_LEN)) psip->method = ACK_METHOD;
                 else
                 	{
-                		printf("UNKNOW METHOD: %s", tmp);
+                		printf("UNKNOWN METHOD: %s", tmp);
                 		psip->method = UNKNOWN_METHOD;
                 	}
 	}
@@ -181,8 +182,12 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                                             psip->transaction = OPTIONS_TRANSACTION;
                                             psip->cseq_method = OPTIONS_METHOD;
                                       }
+                                      else if(!strncmp(pch, ACK_METHOD, ACK_LEN)) {
+                                            psip->transaction = ACK_TRANSACTION;
+                                            psip->cseq_method = ACK_METHOD;
+                                      }
                                       else {
-                                    	    printf("UNKNOW METHOD: %s", pch);
+                                    	    printf("UNKNOWN METHOD: %s", pch);
                                             psip->transaction = UNKNOWN_TRANSACTION;
                                             psip->cseq_method = UNKNOWN_METHOD;
                                       }                                                                
