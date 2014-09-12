@@ -26,6 +26,9 @@
 #include "sipparse.h"
 
 
+static unsigned char *packet = NULL;
+static unsigned int packet_len = 0;
+
 int set_hname(str *hname, int len, char *s) {
                 
         char *end;
@@ -49,49 +52,53 @@ int set_hname(str *hname, int len, char *s) {
 }
 
 
-int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *psip)
+int parse_request(unsigned char *message, unsigned int blen, struct preparsed_sip *psip)
 {
+		unsigned char* new_message = message;
+		unsigned int new_len = blen;
+		if (packet_len > 0) // content was previously left.
+		{
+			printf("Some content was previously left out unparsed\n");
+			new_len = packet_len + blen;
+			new_message = malloc(new_len);
+			memcpy(new_message, packet, packet_len);
+			memcpy(&new_message[packet_len], message, blen);
+		}
+
+		printf("***************Parsing: \n");
+		printf("%s\n\n", new_message);
+
         int offset, last_offset, ret, cut = 0;
         unsigned char *c;
         unsigned char *tmp, *pch;
-              
 
-	if (blen <= 100 ) {
-
-        printf("ERROR: parse_first_line: message too short: %ui\n", blen);
-		return 0;
-    }
-                
-        c = body;
+        c = new_message;
         last_offset = 0;
         offset = 0;
 
-        /* FIRST LINE */
-        for (; *c; c++) {
+        /* Request/Response line */
+        for (; *c && c-new_message < new_len; c++) {
                 if (*c == '\n' && *(c-1) == '\r') {
-                        offset = (c + 1) - body;
+                        offset = (c + 1) - new_message;
                         break;
-                }
-                else if (c - body > blen) {
-                    printf("BAD Sip message: [%s]", body);
-                	return 0;
                 }
         }        
                         
-        if(offset == 0) {
-                printf("BAD tmp[%s] BLEN: [%d]", body, blen);                                
-                return 0;
+        if(offset == 0) { // likely Sip message body
+
+            printf("!!!!!!!!!!!!!likely a Sip message body - length: %d\n", new_len);
+        	return (unsigned int)c-(unsigned int)new_message;
         }
-        else if(offset < 10) {
+        /*else if(offset < 10) {
                 printf("BAD tmp: too short: %d == [%s]", offset, body);                                
-                return 0;
-        }
+                return PARSE_ERROR;
+        }*/
 
         psip->reply = 0;
         memset(psip->reason, 0, sizeof(psip->reason));
         psip->has_totag = 0;
 
-        tmp = (char *) body;
+        tmp = (char *) new_message;
 
         if(!strncmp("SIP/2.0 ", tmp, 8)) {
                 psip->reply = atoi(tmp+8);
@@ -110,46 +117,59 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
         else {
                 psip->is_method = SIP_REQUEST;
                 
-		if(!strncmp(tmp, REGISTER_METHOD, REGISTER_LEN)) psip->method = REGISTER_METHOD;    
-                else if(!strncmp(tmp, INVITE_METHOD, INVITE_LEN)) psip->method = INVITE_METHOD;
-                else if(!strncmp(tmp, BYE_METHOD, BYE_LEN)) psip->method = BYE_METHOD;
-                else if(!strncmp(tmp, CANCEL_METHOD, CANCEL_LEN)) psip->method = CANCEL_METHOD;
-                else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;
-                else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
-                else if(!strncmp(tmp, ACK_METHOD, ACK_LEN)) psip->method = ACK_METHOD;
-                else if(!strncmp(tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) psip->method = SUBSCRIBE_METHOD;
-                else if(!strncmp(tmp, PUBLISH_METHOD, PUBLISH_LEN)) psip->method = PUBLISH_METHOD;
-                else
-                	{
-                	    int offset2 = 0;
-						unsigned char *c = tmp;
-						for (; *c; c++) {
-							if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
-								offset2 = c - tmp;
-								break;
+				if(!strncmp(tmp, REGISTER_METHOD, REGISTER_LEN)) psip->method = REGISTER_METHOD;
+						else if(!strncmp(tmp, INVITE_METHOD, INVITE_LEN)) psip->method = INVITE_METHOD;
+						else if(!strncmp(tmp, BYE_METHOD, BYE_LEN)) psip->method = BYE_METHOD;
+						else if(!strncmp(tmp, CANCEL_METHOD, CANCEL_LEN)) psip->method = CANCEL_METHOD;
+						else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;
+						else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
+						else if(!strncmp(tmp, ACK_METHOD, ACK_LEN)) psip->method = ACK_METHOD;
+						else if(!strncmp(tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) psip->method = SUBSCRIBE_METHOD;
+						else if(!strncmp(tmp, PUBLISH_METHOD, PUBLISH_LEN)) psip->method = PUBLISH_METHOD;
+						else
+							{
+								int offset2 = 0;
+								unsigned char *c = tmp;
+								for (; *c; c++) {
+									if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
+										offset2 = c - tmp;
+										break;
+									}
+								}
+								char method[32] = {0};
+								strncpy(method, tmp, offset2);
+
+								printf("UNKNOWN METHOD: %s\n", method);
+								psip->method = UNKNOWN_METHOD;
 							}
-						}
-						char method[32] = {0};
-						strncpy(method, tmp, offset2);
-
-						printf("UNKNOWN METHOD: %s\n", method);
-                		psip->method = UNKNOWN_METHOD;
-                	}
-	}
+		}
 	
-        c=body+offset;
+        c=new_message+offset;
 
-        for (; *c; c++) {
-                /* END MESSAGE and START BODY */        
+        char request_line[1024] = {0};
+        strncpy(request_line, new_message, offset);
+        printf("Request/Response line: %s\n", request_line);
+
+        int contentLengthFound = 0;
+        int messageEndEncountered = 0;
+        int contentLength = 0;
+
+        for (; *c && c-new_message < new_len; c++) {
+
+//            printf("!!!!!!!!!!!!!!!!!!!!value1: %d - value2: %d\n", (unsigned int)c-(unsigned int)test, new_len);
+        	/* END of Request line and START of all other headers */
         	if (*c == '\r' && *(c+1) == '\n') {        /* end of this line */
 
-       	                last_offset = offset;
-                        offset = (c+2) - body;
-                       
-       	                tmp = (char *) (body + last_offset);                                                                        
+				last_offset = offset;
+				offset = (c+2) - new_message;
 
-       	                /* BODY */                
-		        if((offset - last_offset) == 2) break; // Done parsing, bail out.
+				tmp = (char *) (new_message + last_offset);
+
+				/* BODY */
+		        if((offset - last_offset) == 2) {
+		        	messageEndEncountered = 1;
+		        	break; // Done parsing, bail out.
+		        }
 
                         /* To tag */
 		        if((*tmp == 'T' && *(tmp+1) == 'o' && *(tmp+TO_LEN) == ':') || (*tmp == 't' && *(tmp+1) == ':')) {
@@ -160,19 +180,20 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
 		                else cut = TO_LEN;                              
 		                
 		                ret = set_hname(&psip->to, (offset - last_offset - cut), tmp+cut);
-                        }                                                                                                                                          
-                        else if (((*tmp == 'U' || *tmp == 'u') && (*(tmp + 4) == '-' || *(tmp + 4) == '-') && (*(tmp + 5) == 'A' || *(tmp + 4) == 'a') && *(tmp + USERAGENT_LEN) == ':')) {                        
-				ret = set_hname(&psip->uac, (offset - last_offset - USERAGENT_LEN), tmp + USERAGENT_LEN);
-			}
-                        else if((*tmp == 'F' && *(tmp+1) == 'r' && *(tmp+2) == 'o' && *(tmp+FROM_LEN) == ':') || (*tmp == 'f' && *(tmp+1) == ':')) {
+                }
+                else if (((*tmp == 'U' || *tmp == 'u') && (*(tmp + 4) == '-' || *(tmp + 4) == '-') && (*(tmp + 5) == 'A' || *(tmp + 4) == 'a') && *(tmp + USERAGENT_LEN) == ':')) {
+
+				        ret = set_hname(&psip->uac, (offset - last_offset - USERAGENT_LEN), tmp + USERAGENT_LEN);
+			    }
+		        else if((*tmp == 'F' && *(tmp+1) == 'r' && *(tmp+2) == 'o' && *(tmp+FROM_LEN) == ':') || (*tmp == 'f' && *(tmp+1) == ':')) {
 
                               if( *(tmp+1) == ':') cut = 2;
                               else cut = FROM_LEN;                              
                               ret = set_hname(&psip->from, (offset - last_offset - cut), tmp+cut);
                                                                                     
-                        }
-                        /* CSeq: 21 INVITE */
-                        else if(*tmp == 'C' && *(tmp+1) == 'S' && *(tmp+CSEQ_LEN) == ':') {
+                }
+                /* CSeq: 21 INVITE */
+                else if(*tmp == 'C' && *(tmp+1) == 'S' && *(tmp+CSEQ_LEN) == ':') {
 
                                 if((pch = strchr((tmp+CSEQ_LEN+2),' ')) != NULL) {
 
@@ -234,9 +255,9 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                                       psip->cseq_num = atoi(tmp+CSEQ_LEN+1);                                      
                               }
                                                                 
-                        }  
-                	/* Call-ID: */
-        	        else if(*tmp == 'C' && (*(tmp+5) == 'I' || *(tmp+5) == 'i') && *(tmp+CALLID_LEN) == ':') {
+                }
+                /* Call-ID: */
+        	    else if(*tmp == 'C' && (*(tmp+5) == 'I' || *(tmp+5) == 'i') && *(tmp+CALLID_LEN) == ':') {
         	              
                               ret = set_hname(&psip->callid, (offset - last_offset - CALLID_LEN), tmp+CALLID_LEN);                                                                                         
                                
@@ -244,10 +265,54 @@ int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *
                                          psip->callid.len-=6;
                               }  
                               */                         
-                        }
-		}
-        }                        
+                }
+                /* Content-Length: */
+        	    else if(strncasecmp(tmp, "Content-Length:", 15) == 0) {
 
-        return 1;
+        	        contentLengthFound = 1;
+            	    int offset4 = 0;
+                    unsigned char *c = (tmp+16);
+                    for (; *c; c++) {
+                    	if (*c == '\n' && *(c-1) == '\r') {
+                    		offset4 = c-(tmp+16);
+                    		break;
+                    	}
+                    }
+                    char contentLengthStr[32] = {0};
+                    strncpy(contentLengthStr, tmp+16, offset4);
+                    contentLength = atoi(contentLengthStr);
+                }
+		    }
+        }
+
+        printf("**************pointer: %d - new_len: %d - offset-last_offset: %d\n", (unsigned int)c-(unsigned int)new_message, new_len, (offset - last_offset));
+
+        if (contentLengthFound == 0)// || messageEndEncountered == 0)
+        {
+        	printf("!!!!!!!!!!!!!!!!!!incomplete packet encountered\n");
+        	unsigned char *tmp = malloc(new_len);
+        	memcpy(tmp, new_message, new_len);
+
+        	if (packet_len)
+        	{
+				free(packet);
+        	}
+				packet = tmp;
+				packet_len = new_len;
+        }
+        else if (((unsigned int)c+2-(unsigned int)new_message + contentLength) < new_len)
+        {
+            printf("**************2+ packets merged together encountered\n");
+            return (unsigned int)c+2-(unsigned int)new_message + contentLength;
+        }
+        else if (packet)
+        {
+            printf("**************freeing memory\n");
+        	free(packet);
+        	packet = NULL;
+        	packet_len = 0;
+        }
+
+        return (unsigned int)c+2-(unsigned int)new_message;
 }
 
