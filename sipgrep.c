@@ -982,11 +982,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                  const char *ip_src, const char *ip_dst, uint16_t sport, uint16_t dport, uint8_t flags,
                  uint16_t hdr_offset, uint8_t frag, uint16_t frag_offset, uint32_t frag_id, uint32_t ip_ver) {
         
-    uint8_t local_match;
-    struct callid_table *s = NULL;
-    struct callid_remove *rm = NULL;
-    preparsed_sip_t psip;
-    char callid[256];
     rc_info_t *rcinfo = NULL;
     int now = (unsigned) time(NULL);
         
@@ -1002,13 +997,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         len = limitlen;
         
     if (len == 0) return;
-
-
-    /* SIP must have alpha  and it should be not be HEP */
-    if(!isalpha(data[0]) || !strncmp(data, "HEP3", 4)) {
-//    	      printf("************Not a Sip message: %s\n", data);
-              //return;
-    }
 
     /* send data to homer */
     if(use_homer) {
@@ -1030,16 +1018,22 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                  printf("Not duplicated\n");
         }
         
-	if(rcinfo) free(rcinfo);        
+        if(rcinfo) free(rcinfo);
     }
     
     
-    if(dialog_match) {
-    
-         // Loop until each and every bytes of the message got parsed completely
-         uint32_t bytes_parsed = 0;
-         uint32_t remaining_bytes = len;
-         while (bytes_parsed < len) {
+    // Loop until each and every byte of the message got parsed completely
+    uint32_t bytes_parsed = 0;
+    uint32_t remaining_bytes = len;
+    while (bytes_parsed < len) {
+
+        preparsed_sip_t psip;
+        char callid[256];
+        uint8_t local_match;
+        struct callid_table *s = NULL;
+        struct callid_remove *rm = NULL;
+
+    	if(dialog_match) {
 
              memset(&psip, 0, sizeof(struct preparsed_sip));
              /* SIP parse */
@@ -1055,7 +1049,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 			 snprintf(callid, sizeof(callid), "%.*s", psip.callid.len, psip.callid.s);
 
 			 s = (struct callid_table*)malloc(sizeof(struct callid_table));
-
 			 HASH_FIND_STR( dialogs, callid, s);
 			 if (s) {
 
@@ -1203,141 +1196,138 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 			   if(enable_dialog_remove) check_dialogs_delete();
 
 			 }
-
-			 //printf("betty's id is %d\n", s->id);
-         }
-    }
+    	}
     
-    if(!s) {                  
+		if(!s) {
 
-       // Sip Message not found, add it to hash table
-       local_match = match_func(data, len);
-       if(local_match == 1 || local_match != invert_match) {
-                  
-           if(dialog_match) {           
+		   // Sip Message not found, add it to hash table
+		   local_match = match_func(data, len);
+		   if(local_match == 1 || local_match != invert_match) {
 
-               if(psip.is_method == SIP_REQUEST) {
-                  
-                  if(!strcmp(psip.method, INVITE_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);                       
-                       
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);                       
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);         
-                       
-                       s->transaction = INVITE_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;                                                                           
-                       s->terminated = 0;
-                       s->termination_reason = 0;
-                  }
-                  else if(!strcmp(psip.method, REGISTER_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);                       
-                       
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);                       
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);            
-                       
-                       s->transaction = REGISTER_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;                                
-                       
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;     
-                       s->terminated = 0;      
-                       s->termination_reason = 0;                                                                         
-                  }
-                  else if(!strcmp(psip.method, NOTIFY_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);
+			   if(dialog_match) {
 
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+				   if(psip.is_method == SIP_REQUEST) {
 
-                       s->transaction = NOTIFY_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;
+					  if(!strcmp(psip.method, INVITE_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;
-                       s->terminated = 0;
-                       s->termination_reason = 0;
-                  }
-                  else if(!strcmp(psip.method, OPTIONS_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+						   s->transaction = INVITE_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, REGISTER_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-                       s->transaction = OPTIONS_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;
-                       s->terminated = 0;
-                       s->termination_reason = 0;
-                  }
-                  else if(!strcmp(psip.method, ACK_METHOD)) {
-                	  // Nothing to do (for now)
-                  }
-                  else if(!strcmp(psip.method, SUBSCRIBE_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);
+						   s->transaction = REGISTER_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
 
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, NOTIFY_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-                       s->transaction = SUBSCRIBE_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;
-                       s->terminated = 0;
-                       s->termination_reason = 0;
-                  }
-                  else if(!strcmp(psip.method, PUBLISH_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);
+						   s->transaction = NOTIFY_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
 
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, OPTIONS_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-                       s->transaction = PUBLISH_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;
-                       s->terminated = 0;
-                       s->termination_reason = 0;
-                  }
+						   s->transaction = OPTIONS_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
 
-                  if(s) HASH_ADD_STR( dialogs, callid, s );
-               }	           
-           }
-       }
-       else {          
-          return;
-       }
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, ACK_METHOD)) {
+						  // Nothing to do (for now)
+					  }
+					  else if(!strcmp(psip.method, SUBSCRIBE_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
+
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+						   s->transaction = SUBSCRIBE_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, PUBLISH_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
+
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+						   s->transaction = PUBLISH_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+
+					  if(s) HASH_ADD_STR( dialogs, callid, s );
+				   }
+			   }
+		   }
+		   else {
+			  return;
+		   }
+		}
     }    
-    
     
     if (!live_read && want_delay)
         dump_delay(h);
