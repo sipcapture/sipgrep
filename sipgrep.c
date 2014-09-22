@@ -1043,7 +1043,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
              memset(&psip, 0, sizeof(struct preparsed_sip));
              /* SIP parse */
-        	 bytes_parsed += parse_request(&data[bytes_parsed], remaining_bytes, &psip);
+        	 bytes_parsed += parse_message(&data[bytes_parsed], remaining_bytes, &psip);
         	 printf("*************byte parsed: %d\n", bytes_parsed);
         	 remaining_bytes = len - bytes_parsed;
 

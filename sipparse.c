@@ -52,7 +52,7 @@ int set_hname(str *hname, int len, char *s) {
 }
 
 
-int parse_request(unsigned char *message, unsigned int blen, struct preparsed_sip *psip)
+int parse_message(unsigned char *message, unsigned int blen, struct preparsed_sip *psip)
 {
 		unsigned char* new_message = message;
 		unsigned int new_len = blen;
