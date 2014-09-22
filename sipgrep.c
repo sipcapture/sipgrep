@@ -1036,27 +1036,17 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
     
     if(dialog_match) {
     
-         // loop here
+         // Loop until each and every bytes of the message got parsed completely
          uint32_t bytes_parsed = 0;
          uint32_t remaining_bytes = len;
          while (bytes_parsed < len) {
 
              memset(&psip, 0, sizeof(struct preparsed_sip));
              /* SIP parse */
-        	 if ((bytes_parsed += parse_request(&data[bytes_parsed], remaining_bytes, &psip)) == PARSE_ERROR && !ignore_bad_sip) {
-
-        		 printf("bad sip message or too short : Len: [%d] Data: [%.*s]\n", len, len, data);
-        		 return;
-        	 }
-
+        	 bytes_parsed += parse_request(&data[bytes_parsed], remaining_bytes, &psip);
         	 printf("*************byte parsed: %d\n", bytes_parsed);
         	 remaining_bytes = len - bytes_parsed;
 
-//             if(parse_result == PARSE_ERROR && !ignore_bad_sip) {
-//            	 printf("bad sip message or too short : Len: [%d] Data: [%.*s]\n", len, len, data);
-//                 return;
-//             }
-                                     
 			 if(kill_friendlyscanner && psip.uac.len > 0 && (strstr(psip.uac.s, friendly_scanner_uac) != NULL)) {
 				 printf("Killing friendly scanner [%s]...\n", friendly_scanner_uac);
 				 send_kill_to_friendly_scanner(ip_src, sport);

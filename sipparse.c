@@ -89,10 +89,6 @@ int parse_request(unsigned char *message, unsigned int blen, struct preparsed_si
             printf("!!!!!!!!!!!!!likely a Sip message body - length: %d\n", new_len);
         	return (unsigned int)c-(unsigned int)new_message;
         }
-        /*else if(offset < 10) {
-                printf("BAD tmp: too short: %d == [%s]", offset, body);                                
-                return PARSE_ERROR;
-        }*/
 
         psip->reply = 0;
         memset(psip->reason, 0, sizeof(psip->reason));

@@ -128,8 +128,6 @@ typedef struct preparsed_sip {
       str uac;
 } preparsed_sip_t;
 
-#define PARSE_ERROR -1
-
 int set_hname(str *hname, int len, char *s);
 int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *psip);
 
