@@ -1042,7 +1042,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         	 total_bytes_parsed += bytes_parsed;
         	 remaining_bytes = len - total_bytes_parsed;
 
-        	 printf("*************bytes received: %d - bytes parsed: %d - remaining bytes: %d\n", len, total_bytes_parsed, remaining_bytes);
              if (message_parsed == 0) {
 
             	 // incomplete packet encountered, will deal with it whenever next packet comes in.
