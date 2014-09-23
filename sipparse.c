@@ -58,7 +58,6 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 		unsigned int new_len = blen;
 		if (packet_len > 0) // content was previously left unparsed.
 		{
-			printf("Some content was previously left out unparsed\n");
 			new_len = packet_len + blen;
 			new_message = malloc(new_len);
 			memcpy(new_message, packet, packet_len);
@@ -81,9 +80,8 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
                 }
         }        
                         
-        if(offset == 0) { // likely Sip message body
+        if(offset == 0) { // likely Sip Message Body only...
 
-            printf("!!!!!!!!!!!!!Sip Message Body Only - Length: %d\n", new_len);
             *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
             return 1;
         }
@@ -265,6 +263,7 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
         }
 
         int message_parsed = 1;
+        *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message;
         if (contentLengthFound == 0)
         {
         	// incomplete packet encountered
