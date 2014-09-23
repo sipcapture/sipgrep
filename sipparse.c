@@ -65,9 +65,6 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 			memcpy(&new_message[packet_len], message, blen);
 		}
 
-		printf("***************Parsing: \n");
-		printf("%s\n\n", new_message);
-
         int offset, last_offset, ret, cut = 0;
         unsigned char *c;
         unsigned char *tmp, *pch;
@@ -268,10 +265,9 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
         }
 
         int message_parsed = 1;
-        *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message;
         if (contentLengthFound == 0)
         {
-        	printf("!!!!!!!!!!!!!!!!!!incomplete packet encountered\n");
+        	// incomplete packet encountered
         	unsigned char *tmp = malloc(new_len);
         	memcpy(tmp, new_message, new_len);
 
@@ -287,15 +283,16 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
         }
         else if (((unsigned int)c+2-(unsigned int)new_message + contentLength) < new_len)
         {
-            printf("**************2 packets or more merged together encountered\n");
+            // 2 packets or more merged together encountered
             *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message + contentLength;
         }
         else if (packet)
         {
-            printf("**************freeing memory\n");
-        	free(packet);
-        	packet = NULL;
-        	packet_len = 0;
+            // free up memory
+            free(packet);
+            packet = NULL;
+            packet_len = 0;
+            *bytes_parsed = blen;
         }
 
         return message_parsed;
