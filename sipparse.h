@@ -129,7 +129,7 @@ typedef struct preparsed_sip {
 } preparsed_sip_t;
 
 int set_hname(str *hname, int len, char *s);
-int parse_message(unsigned char *body, unsigned int blen, struct preparsed_sip *psip);
+int parse_message(unsigned char *body, unsigned int blen, unsigned int* bytes_parsed, struct preparsed_sip *psip);
 
 
 #endif /* _SIPPARSE_H */

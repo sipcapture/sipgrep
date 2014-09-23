@@ -1023,9 +1023,9 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
     
     
     // Loop until each and every byte of the message got parsed completely
-    uint32_t bytes_parsed = 0;
+    uint32_t total_bytes_parsed = 0;
     uint32_t remaining_bytes = len;
-    while (bytes_parsed < len) {
+    while (total_bytes_parsed < len) {
 
         preparsed_sip_t psip;
         char callid[256];
@@ -1035,11 +1035,19 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
 
     	if(dialog_match) {
 
+            /* SIP parse */
              memset(&psip, 0, sizeof(struct preparsed_sip));
-             /* SIP parse */
-        	 bytes_parsed += parse_message(&data[bytes_parsed], remaining_bytes, &psip);
-        	 printf("*************byte parsed: %d\n", bytes_parsed);
-        	 remaining_bytes = len - bytes_parsed;
+             uint32_t bytes_parsed = 0;
+             int message_parsed = parse_message(&data[total_bytes_parsed], remaining_bytes, &bytes_parsed, &psip);
+        	 total_bytes_parsed += bytes_parsed;
+        	 remaining_bytes = len - total_bytes_parsed;
+
+        	 printf("*************bytes received: %d - bytes parsed: %d - remaining bytes: %d\n", len, total_bytes_parsed, remaining_bytes);
+             if (message_parsed == 0) {
+
+            	 // incomplete packet encountered, will deal with it whenever next packet comes in.
+            	 continue;
+             }
 
 			 if(kill_friendlyscanner && psip.uac.len > 0 && (strstr(psip.uac.s, friendly_scanner_uac) != NULL)) {
 				 printf("Killing friendly scanner [%s]...\n", friendly_scanner_uac);

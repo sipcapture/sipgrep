@@ -52,11 +52,11 @@ int set_hname(str *hname, int len, char *s) {
 }
 
 
-int parse_message(unsigned char *message, unsigned int blen, struct preparsed_sip *psip)
+int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes_parsed, struct preparsed_sip *psip)
 {
 		unsigned char* new_message = message;
 		unsigned int new_len = blen;
-		if (packet_len > 0) // content was previously left.
+		if (packet_len > 0) // content was previously left unparsed.
 		{
 			printf("Some content was previously left out unparsed\n");
 			new_len = packet_len + blen;
@@ -86,8 +86,9 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
                         
         if(offset == 0) { // likely Sip message body
 
-            printf("!!!!!!!!!!!!!likely a Sip message body - length: %d\n", new_len);
-        	return (unsigned int)c-(unsigned int)new_message;
+            printf("!!!!!!!!!!!!!Sip Message Body Only - Length: %d\n", new_len);
+            *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
+            return 1;
         }
 
         psip->reply = 0;
@@ -147,12 +148,10 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
         printf("Request/Response line: %s\n", request_line);
 
         int contentLengthFound = 0;
-        int messageEndEncountered = 0;
         int contentLength = 0;
 
         for (; *c && c-new_message < new_len; c++) {
 
-//            printf("!!!!!!!!!!!!!!!!!!!!value1: %d - value2: %d\n", (unsigned int)c-(unsigned int)test, new_len);
         	/* END of Request line and START of all other headers */
         	if (*c == '\r' && *(c+1) == '\n') {        /* end of this line */
 
@@ -163,7 +162,6 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
 
 				/* BODY */
 		        if((offset - last_offset) == 2) {
-		        	messageEndEncountered = 1;
 		        	break; // Done parsing, bail out.
 		        }
 
@@ -232,18 +230,6 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
                                             psip->cseq_method = PUBLISH_METHOD;
                                       }
                                       else {
-                                    	    int offset3 = 0;
-                                            unsigned char *c = pch;
-                                            for (; *c; c++) {
-                                            	if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-pch > 31) {
-                                            		offset3 = c-pch;
-                                            		break;
-                                            	}
-                                            }
-                                            char method[32] = {0};
-                                            strncpy(method, pch, offset3);
-
-                                            printf("UNKNOWN METHOD: %s\n", method);
                                             psip->transaction = UNKNOWN_TRANSACTION;
                                             psip->cseq_method = UNKNOWN_METHOD;
                                       }                                                                
@@ -281,9 +267,9 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
 		    }
         }
 
-        printf("**************pointer: %d - new_len: %d - offset-last_offset: %d\n", (unsigned int)c-(unsigned int)new_message, new_len, (offset - last_offset));
-
-        if (contentLengthFound == 0)// || messageEndEncountered == 0)
+        int message_parsed = 1;
+        *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message;
+        if (contentLengthFound == 0)
         {
         	printf("!!!!!!!!!!!!!!!!!!incomplete packet encountered\n");
         	unsigned char *tmp = malloc(new_len);
@@ -293,13 +279,16 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
         	{
 				free(packet);
         	}
-				packet = tmp;
-				packet_len = new_len;
+
+			packet = tmp;
+			packet_len = new_len;
+            *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
+            message_parsed = 0;
         }
         else if (((unsigned int)c+2-(unsigned int)new_message + contentLength) < new_len)
         {
-            printf("**************2+ packets merged together encountered\n");
-            return (unsigned int)c+2-(unsigned int)new_message + contentLength;
+            printf("**************2 packets or more merged together encountered\n");
+            *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message + contentLength;
         }
         else if (packet)
         {
@@ -309,6 +298,6 @@ int parse_message(unsigned char *message, unsigned int blen, struct preparsed_si
         	packet_len = 0;
         }
 
-        return (unsigned int)c+2-(unsigned int)new_message;
+        return message_parsed;
 }
 
