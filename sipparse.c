@@ -56,8 +56,15 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 {
 		unsigned char* new_message = message;
 		unsigned int new_len = blen;
-		if (packet_len > 0) // content was previously left unparsed.
-		{
+		if (blen <= 2 && packet_len == 0) {
+
+			// We seem to be getting garbage packets from
+			// from some SIP UACs: skip them altogether.
+            *bytes_parsed = blen;
+            return 0;
+		}
+		else if (packet_len > 0) { // content was previously left unparsed.
+
 			new_len = packet_len + blen;
 			new_message = malloc(new_len);
 			memcpy(new_message, packet, packet_len);
@@ -83,7 +90,7 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
         if(offset == 0) { // likely Sip Message Body only...
 
             *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
-            return 1;
+            return 0;
         }
 
         psip->reply = 0;
@@ -264,8 +271,8 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 
         int message_parsed = 1;
         *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message;
-        if (contentLengthFound == 0)
-        {
+        if (contentLengthFound == 0) {
+
         	// incomplete packet encountered
         	unsigned char *tmp = malloc(new_len);
         	memcpy(tmp, new_message, new_len);
@@ -280,18 +287,23 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
             *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
             message_parsed = 0;
         }
-        else if (((unsigned int)c+2-(unsigned int)new_message + contentLength) < new_len)
-        {
+        else if (((unsigned int)c+2-(unsigned int)new_message + contentLength) < new_len) {
+
             // 2 packets or more merged together encountered
             *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message + contentLength;
         }
-        else if (packet)
-        {
+        else if (packet) {
+
             // free up memory
             free(packet);
             packet = NULL;
             packet_len = 0;
             *bytes_parsed = blen;
+        }
+        else if (blen > *bytes_parsed) {
+
+        	// Skip message body.
+        	*bytes_parsed = blen;
         }
 
         return message_parsed;
