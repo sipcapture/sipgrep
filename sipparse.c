@@ -99,18 +99,22 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 
         tmp = (char *) new_message;
 
-        if(!strncmp("SIP/2.0 ", tmp, 8)) {
-                psip->reply = atoi(tmp+8);
+        char sip20[] = {"SIP/2.0 "};
+        int sipLen = strlen(sip20);
+        int codeLen = 4; // that is "200 " for example
+
+        if(!strncmp(sip20, tmp, sipLen)) {
+                psip->reply = atoi(tmp+sipLen);
                 psip->is_method = SIP_REPLY;
 
                 // Extract Response code's reason
-                unsigned char *reason = tmp+12;
+                unsigned char *reason = tmp+sipLen+codeLen;
                 for (; *reason; reason++) {
                         if (*reason == '\n' && *(reason-1) == '\r') {
                                 break;
                         }
                 }
-                strncpy(psip->reason, tmp+12, reason-(tmp+12));
+                strncpy(psip->reason, tmp+12, reason-(tmp+sipLen+codeLen+1/*that's covering /r/n*/));
                 
 	    }
         else {
