@@ -119,7 +119,7 @@ uint16_t snaplen = 65535, limitlen = 65535, promisc = 1, to = 100;
 uint16_t match_after = 0, keep_matching = 0, matches = 0, max_matches = 0;
 
 uint8_t  re_match_word = 0, re_ignore_case = 0, re_multiline_match = 1;
-uint8_t  show_empty = 0, show_proto = 0, quiet = 1;
+uint8_t  show_empty = 0, show_proto = 0, quiet = 3	;
 uint8_t  invert_match = 0;
 uint8_t  live_read = 1, want_delay = 0;
 uint8_t  dont_dropprivs = 0, ignore_bad_sip = 0;
@@ -233,13 +233,13 @@ int main(int argc, char **argv) {
             case 'q':
                 if(parse_stop_request(optarg) != 0) {
                     usage(-1);
-                    exit;                                  
+                    exit(1);
                 }
                 break;                
             case 'Q':
                 if(parse_split_request(optarg) != 0) {
                     usage(-1);
-                    exit;                                  
+                    exit(1);
                 }
                 /* we should keep our priv. to rotate files */
                 dont_dropprivs = 1;
@@ -339,11 +339,13 @@ int main(int argc, char **argv) {
                 break;
             case 'V':
                 version();
+                break;
             case 'N':
                 show_proto++;
                 break;
             case 'h':
                 usage(0);
+                break;
             default:
                 usage(-1);
         }
@@ -362,7 +364,7 @@ int main(int argc, char **argv) {
     if((stop_working_type == FILESIZE_SPLIT || split_file_type != 0) && !dump_file) {
         fprintf(stderr, "-O parameter missed\n");
         usage(-1);
-        exit;                            
+        exit(1);
     }
         
     if(use_homer) {
@@ -370,7 +372,7 @@ int main(int argc, char **argv) {
         if(!homer_capture_url || make_homer_socket(homer_capture_url)) {
              fprintf(stderr, "bad homer url\n");
              usage(-1);
-             exit;                    
+             exit(1);
         }        
     }
 
@@ -641,7 +643,7 @@ void create_dump(unsigned int now) {
 
         len = strlen(dump_file);
     
-        if(file_ext = strrchr(dump_file, '.')) {            
+        if((file_ext = strrchr(dump_file, '.'))) {
             if(file_ext == dump_file) file_ext = NULL;
             else len -= strlen(file_ext);        
         }        
@@ -962,7 +964,7 @@ int check_exit_deadline(unsigned int now) {
                   return 0;
               }                                                
               break;
-         };
+         }
          
          case FILESIZE_SPLIT:{
                stat(dump_file, &st);
@@ -972,7 +974,7 @@ int check_exit_deadline(unsigned int now) {
                    return 0;
                }
                break;
-         };   
+         }
          default: 
                  break;
     }
@@ -984,11 +986,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
                  const char *ip_src, const char *ip_dst, uint16_t sport, uint16_t dport, uint8_t flags,
                  uint16_t hdr_offset, uint8_t frag, uint16_t frag_offset, uint32_t frag_id, uint32_t ip_ver) {
         
-    uint8_t local_match;
-    struct callid_table *s = NULL;
-    struct callid_remove *rm = NULL;
-    preparsed_sip_t psip;
-    char callid[256];
     rc_info_t *rcinfo = NULL;
     int now = (unsigned) time(NULL);
         
@@ -1005,12 +1002,6 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         
     if (len == 0) return;
 
-
-    /* SIP must have alpha  and it should be not be HEP */
-    if(!isalpha(data[0]) || !strncmp(data, "HEP3", 4)) {
-              return;
-    }
-
     /* send data to homer */
     if(use_homer) {
         rcinfo = malloc(sizeof(rc_info_t));
@@ -1026,241 +1017,328 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         rcinfo->time_usec  = h->ts.tv_usec;
         rcinfo->proto_type = 1;
 
-        /* Duplcate */
+        /* Duplicate */
         if(!send_hepv3(rcinfo, data, (unsigned int) len)) {
                  printf("Not duplicated\n");
         }
         
-	if(rcinfo) free(rcinfo);        
+        if(rcinfo) free(rcinfo);
     }
     
     
-    if(dialog_match) {
+    // Loop until each and every byte of the message got parsed completely
+    uint32_t total_bytes_parsed = 0;
+    uint32_t remaining_bytes = len;
+    while (total_bytes_parsed < len) {
+
+        preparsed_sip_t psip;
+        char callid[256];
+        uint8_t local_match;
+        struct callid_table *s = NULL;
+        struct callid_remove *rm = NULL;
+
+    	if(dialog_match) {
+
+            /* SIP parse */
+             memset(&psip, 0, sizeof(struct preparsed_sip));
+             uint32_t bytes_parsed = 0;
+             int message_parsed = parse_message(&data[total_bytes_parsed], remaining_bytes, &bytes_parsed, &psip);
+        	 total_bytes_parsed += bytes_parsed;
+        	 remaining_bytes = len - total_bytes_parsed;
+
+             if (message_parsed == 0) {
+
+            	 // incomplete packet encountered, will deal with it whenever next packet comes in.
+            	 continue;
+             }
+
+			 if(kill_friendlyscanner && psip.uac.len > 0 && (strstr(psip.uac.s, friendly_scanner_uac) != NULL)) {
+				 printf("Killing friendly scanner [%s]...\n", friendly_scanner_uac);
+				 send_kill_to_friendly_scanner(ip_src, sport);
+			 }
+
+			 snprintf(callid, sizeof(callid), "%.*s", psip.callid.len, psip.callid.s);
+
+			 s = (struct callid_table*)malloc(sizeof(struct callid_table));
+			 HASH_FIND_STR( dialogs, callid, s);
+			 if (s) {
+
+			   // Sip Message found, update hash table
+			   if(psip.is_method == SIP_REPLY) { // This is a response
+
+					  if(!strcmp(psip.cseq_method, INVITE_METHOD)) {
+
+						   switch(psip.reply/100) {
+
+								 case 1:
+									  if(psip.reply >= 180) s->cdr_ringing = h->ts.tv_sec;
+									  break;
+								 case 2:
+									  s->cdr_connect = h->ts.tv_sec;
+									  break;
+								 case 3:
+									  if(psip.reply == 386) {
+										  s->terminated = CALL_MOVED_TERMINATION;
+										  s->termination_reason = psip.reply;
+										  s->cdr_disconnect = h->ts.tv_sec;
+									  }
+									  break;
+								 case 4:
+									  s->termination_reason = psip.reply;
+									  if(psip.reply == 401 || psip.reply == 407) s->terminated = CALL_AUTH_TERMINATION;
+									  else if(psip.reply == 487)  s->terminated = CALL_CANCEL_TERMINATION;
+									  else s->terminated = CALL_4XX_TERMINATION ;
+									  s->cdr_disconnect = h->ts.tv_sec;
+									  break;
+								 case 5:
+									  s->termination_reason = psip.reply;
+									  s->terminated = CALL_5XX_TERMINATION;
+									  s->cdr_disconnect = h->ts.tv_sec;
+									  break;
+								 case 6:
+									  s->termination_reason = psip.reply;
+									  s->terminated = CALL_6XX_TERMINATION;
+									  s->cdr_disconnect = h->ts.tv_sec;
+									  break;
+								 default:
+									break;
+						   }
+
+					  }
+					  else if(!strcmp(psip.cseq_method, REGISTER_METHOD)) {
+
+							switch(psip.reply/100) {
+
+								 case 2:
+									  s->cdr_connect = h->ts.tv_sec;
+									  s->terminated = REGISTRATION_200_TERMINATION;
+									  s->termination_reason = psip.reply;
+									  s->registered = 1;
+									  break;
+								 case 3:
+								 case 4:
+									s->termination_reason = psip.reply;
+									if(psip.reply == 401 || psip.reply == 407) s->terminated = CALL_AUTH_TERMINATION;
+									else s->terminated = CALL_4XX_TERMINATION ;
+									s->cdr_disconnect = h->ts.tv_sec;
+									break;
+								 case 5:
+									s->termination_reason = psip.reply;
+									s->terminated = CALL_5XX_TERMINATION ;
+									s->cdr_disconnect = h->ts.tv_sec;
+									break;
+								 case 6:
+									s->termination_reason = psip.reply;
+									s->terminated = REGISTRATION_6XX_TERMINATION ;
+									s->cdr_disconnect = h->ts.tv_sec;
+									break;
+								default:
+									break;
+						   }
+					  }
+			   }
+			   /* REQUEST */
+			   else {
+
+					  if(!strcmp(psip.method, INVITE_METHOD)) { // Re-Invite
+						   /* if new invite without to-tag */
+
+						   if(psip.has_totag == 0 && s->init_cseq < psip.cseq_num) {
+
+								/* remove CALLID from remove hash */
+								if(s->terminated != 0) delete_dialogs_remove_element(callid);
+
+								s->init_cseq = psip.cseq_num;
+								s->cdr_init = h->ts.tv_sec;
+								s->cdr_ringing = 0;
+								s->cdr_connect = 0;
+								s->cdr_disconnect = 0;
+								s->termination_reason = 0;
+								s->terminated = 0;
+						  }
+					  }
+					  else if(!strcmp(psip.method, REGISTER_METHOD)) {
+
+						   if(s->init_cseq < psip.cseq_num) {
+
+								s->init_cseq = psip.cseq_num;
+								s->cdr_init = h->ts.tv_sec;
+								s->cdr_ringing = 0;
+								s->cdr_connect = 0;
+								s->cdr_disconnect = 0;
+								s->termination_reason = 0;
+								s->terminated = 0;
+								s->registered = 0;
+						   }
+					  }
+					  else if(!strcmp(psip.method, BYE_METHOD)) {
+
+						   s->cdr_disconnect = h->ts.tv_sec;
+						   s->terminated = CALL_BYE_TERMINATION;
+						   s->termination_reason = 900;
+					  }
+					  else if(!strcmp(psip.method, CANCEL_METHOD)) {
+
+						   s->cdr_disconnect = h->ts.tv_sec;
+						   s->terminated = CALL_CANCEL_TERMINATION;
+					  }
+			   }
+
+			   //callid_remove
+			   if(s->terminated != 0) {
+
+				   HASH_FIND_STR( dialogs_remove, callid, rm);
+
+				   if(!rm) {
+
+					   rm = (struct callid_remove*)malloc(sizeof(struct callid_remove));
+					   snprintf(rm->callid, 256, "%s", callid);
+
+					   rm->removed = 1;
+					   rm->time = (unsigned)time(NULL) + 5;
+					   HASH_ADD_STR( dialogs_remove, callid, rm );
+
+					   /* new remove time */
+					   if(time_dialog_remove == 0) time_dialog_remove = rm->time;
+				   }
+				}
+
+			   /* check our Hashtable if need to delete something */
+			   if(enable_dialog_remove) check_dialogs_delete();
+
+			 }
+    	}
     
-         memset(&psip, 0, sizeof(struct preparsed_sip));            
-         /* SIP parse */                        
+		if(!s) {
 
-         if(!parse_request((unsigned char*)data, len, &psip)) {        
-             if(!ignore_bad_sip) printf("bad sip message or too short : Len: [%d] Data: [%.*s]\n", len, len, data);             
-             return;
-         }
-         
-                                     
-         if(kill_friendlyscanner && psip.uac.len > 0 && (strstr(psip.uac.s, friendly_scanner_uac) != NULL)) {         
-             printf("Killing friendly scanner [%s]...\n", friendly_scanner_uac);
-             send_kill_to_friendly_scanner(ip_src, sport);             
-         }
-                 
-         snprintf(callid, sizeof(callid), "%.*s", psip.callid.len, psip.callid.s);        
+		   // Sip Message not found, add it to hash table
+		   local_match = match_func(data, len);
+		   if(local_match == 1 || local_match != invert_match) {
 
-         s = (struct callid_table*)malloc(sizeof(struct callid_table));
+			   if(dialog_match) {
 
-         HASH_FIND_STR( dialogs, callid, s);
+				   if(psip.is_method == SIP_REQUEST) {
 
-         if (s) {
+					  if(!strcmp(psip.method, INVITE_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-           if(psip.is_method == SIP_REPLY) {
-                  
-                  if(!strcmp(psip.cseq_method, INVITE_METHOD)) {
-                                              
-                       switch(psip.reply/100) {
-                         
-                             case 1:
-                                  if(psip.reply >= 180) s->cdr_ringing = h->ts.tv_sec;
-                                  break;                             
-                             case 2:                                    
-                                  s->cdr_connect = h->ts.tv_sec;
-                                  break;                                                                 
-                             case 3:    
-                                  if(psip.reply == 386) {
-                                      s->terminated = CALL_MOVED_TERMINATION;
-                                      s->termination_reason = psip.reply;
-                                      s->cdr_disconnect = h->ts.tv_sec;
-                                  }
-                                  break;
-                             case 4:                                    
-                                  s->termination_reason = psip.reply;                                   
-                                  if(psip.reply == 401 || psip.reply == 407) s->terminated = CALL_AUTH_TERMINATION;
-                                  else if(psip.reply == 487)  s->terminated = CALL_CANCEL_TERMINATION;                              
-                                  else s->terminated = CALL_4XX_TERMINATION ;                                                                        
-                                  s->cdr_disconnect = h->ts.tv_sec;
-                                  break; 
-                             case 5:    
-                                  s->termination_reason = psip.reply;
-                                  s->terminated = CALL_5XX_TERMINATION;    
-                                  s->cdr_disconnect = h->ts.tv_sec;
-                                  break;                         
-                             case 6:                                
-                                  s->termination_reason = psip.reply;                                                               
-                                  s->terminated = CALL_6XX_TERMINATION;
-                                  s->cdr_disconnect = h->ts.tv_sec;
-                                  break;                                             
-                             default:
-                                break;                                          
-                       }
-                  
-                  }
-                  else if(!strcmp(psip.cseq_method, REGISTER_METHOD)) {
-                        
-                        switch(psip.reply/100) {
-                         
-                             case 2:
-                                  s->cdr_connect = h->ts.tv_sec;
-                                  s->terminated = REGISTRATION_200_TERMINATION;
-                                  s->termination_reason = psip.reply;
-                                  s->registered = 1;
-                                  break;                                                                 
-                             case 3:                                 
-                             case 4:  
-                                s->termination_reason = psip.reply;
-                                if(psip.reply == 401 || psip.reply == 407) s->terminated = CALL_AUTH_TERMINATION;
-                                else s->terminated = CALL_4XX_TERMINATION ;
-                                s->cdr_disconnect = h->ts.tv_sec;
-                                break;                                                                                             
-                             case 5:    
-                                s->termination_reason = psip.reply;
-                                s->terminated = CALL_5XX_TERMINATION ;
-                                s->cdr_disconnect = h->ts.tv_sec;
-                                break;                         
-                             case 6:                                
-                                s->termination_reason = psip.reply;
-                                s->terminated = REGISTRATION_6XX_TERMINATION ;
-                                s->cdr_disconnect = h->ts.tv_sec;
-                                break;     
-                            default:
-                                break;                                                  
-                       }                                        
-                  }
-           } 
-           /* REQUEST */
-           else {
-                                  
-                  if(!strcmp(psip.method, INVITE_METHOD)) {
-                       /* if new invite without totag */
-                                             
-                       if(psip.has_totag == 0 && s->init_cseq < psip.cseq_num) {                       
-                                              
-                            /* remove CALLID from remove hash */
-                            if(s->terminated != 0) delete_dialogs_remove_element(callid);                            
-                       
-                            s->init_cseq = psip.cseq_num; 
-                            s->cdr_init = h->ts.tv_sec;
-                            s->cdr_ringing = 0;
-                            s->cdr_connect = 0;
-                            s->cdr_disconnect = 0;                                                                           
-                            s->termination_reason = 0;
-                            s->terminated = 0;
-                      }
-                  }
-                  else if(!strcmp(psip.method, REGISTER_METHOD)) {
-                  
-                       if(s->init_cseq < psip.cseq_num) {                                              
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
-                            s->init_cseq = psip.cseq_num;                                                       
-                            s->cdr_init = h->ts.tv_sec;
-                            s->cdr_ringing = 0;
-                            s->cdr_connect = 0;
-                            s->cdr_disconnect = 0;    
-                            s->termination_reason = 0;                                                                                
-                            s->terminated = 0;
-                            s->registered = 0;
-                       }
-                  }
-                  else if(!strcmp(psip.method, BYE_METHOD)) {
-                  
-                       s->cdr_disconnect = h->ts.tv_sec;
-                       s->terminated = CALL_BYE_TERMINATION;  
-                       s->termination_reason = 900;
-                  }
-                  else if(!strcmp(psip.method, CANCEL_METHOD)) {
-                  
-                       s->cdr_disconnect = h->ts.tv_sec;
-                       s->terminated = CALL_CANCEL_TERMINATION;                       
-                  }                      
-           }           
-      
-           //callid_remove
-           if(s->terminated != 0) {
-               
-               HASH_FIND_STR( dialogs_remove, callid, rm);
+						   s->transaction = INVITE_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, REGISTER_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-               if(!rm) {
-                
-                   rm = (struct callid_remove*)malloc(sizeof(struct callid_remove));
-                   snprintf(rm->callid, 256, "%s", callid);                       
-                                      
-                   rm->removed = 1;
-                   rm->time = (unsigned)time(NULL) + 5;
-                   HASH_ADD_STR( dialogs_remove, callid, rm );
-                
-                   /* new remove time */   
-                   if(time_dialog_remove == 0) time_dialog_remove = rm->time;                   
-               }
-            }                        
-                       
-           /* check our Hashtable if need to delete something */
-           if(enable_dialog_remove) check_dialogs_delete();            
-            
-         }
-         
-         //printf("betty's id is %d\n", s->id);
-    }
-    
-    if(!s) {                  
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
+						   s->transaction = REGISTER_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
 
-       local_match = match_func(data, len);
-       if(local_match == 1 || local_match != invert_match) {
-                  
-           if(dialog_match) {           
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, NOTIFY_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
 
-               if(psip.is_method == SIP_REQUEST) {
-                  
-                  if(!strcmp(psip.method, INVITE_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);                       
-                       
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);                       
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);         
-                       
-                       s->transaction = INVITE_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;                                                                           
-                       s->terminated = 0;
-                       s->termination_reason = 0;
-                  }
-                  else if(!strcmp(psip.method, REGISTER_METHOD)) {
-                       s = (struct callid_table*)malloc(sizeof(struct callid_table));
-                       snprintf(s->callid, 256, "%s", callid);                       
-                       
-                       if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);                       
-                       if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
-                       if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);            
-                       
-                       s->transaction = REGISTER_TRANSACTION;
-                       s->init_cseq = psip.cseq_num;                                
-                       
-                       s->cdr_init = h->ts.tv_sec;
-                       s->cdr_ringing = 0;
-                       s->cdr_connect = 0;
-                       s->cdr_disconnect = 0;     
-                       s->terminated = 0;      
-                       s->termination_reason = 0;                                                                         
-                  }
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
 
-                  if(s) HASH_ADD_STR( dialogs, callid, s );
-               }	           
-           }
-       }
-       else {          
-          return;
-       }
+						   s->transaction = NOTIFY_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, OPTIONS_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
+
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+						   s->transaction = OPTIONS_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, ACK_METHOD)) {
+						  // Nothing to do (for now)
+					  }
+					  else if(!strcmp(psip.method, SUBSCRIBE_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
+
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+						   s->transaction = SUBSCRIBE_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+					  else if(!strcmp(psip.method, PUBLISH_METHOD)) {
+						   s = (struct callid_table*)malloc(sizeof(struct callid_table));
+						   snprintf(s->callid, 256, "%s", callid);
+
+						   if(psip.from.len) snprintf(s->from, 256, "%.*s", psip.from.len, psip.from.s);
+						   if(psip.to.len) snprintf(s->to, 256, "%.*s", psip.to.len, psip.to.s);
+						   if(psip.uac.len) snprintf(s->uac, 256, "%.*s", psip.uac.len, psip.uac.s);
+
+						   s->transaction = PUBLISH_TRANSACTION;
+						   s->init_cseq = psip.cseq_num;
+
+						   s->cdr_init = h->ts.tv_sec;
+						   s->cdr_ringing = 0;
+						   s->cdr_connect = 0;
+						   s->cdr_disconnect = 0;
+						   s->terminated = 0;
+						   s->termination_reason = 0;
+					  }
+
+					  if(s) HASH_ADD_STR( dialogs, callid, s );
+				   }
+			   }
+		   }
+		   else {
+			  return;
+		   }
+		}
     }    
-    
     
     if (!live_read && want_delay)
         dump_delay(h);
@@ -1324,7 +1402,7 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         printf("\n");
 
     if (quiet < 3)
-        dump_func(data, len);
+        dump_func(data, len); // dumps the packet held by data buffer
 
     if (pd_dump){
         /* check rotation */
@@ -1346,6 +1424,7 @@ int8_t re_match_func(unsigned char *data, uint32_t len) {
         case PCRE_ERROR_NOMEMORY:
             perror("she's dead, jim\n");
             clean_exit(-2);
+            break;
 
         case PCRE_ERROR_NOMATCH:
             return 0;
@@ -1368,6 +1447,7 @@ int8_t blank_match_func(unsigned char *data, uint32_t len) {
     return 1;
 }
 
+// this dumps the given data which represents an actual packet.
 void dump_byline(unsigned char *data, uint32_t len) {
     if (len > 0) {
         const unsigned char *s = data;
@@ -1449,7 +1529,7 @@ void dump_byline(unsigned char *data, uint32_t len) {
             
                  if(start >= 0 && start == offset) {
                      printf("%s",color);
-                     start == -1;
+                     start = -1;
                  }                       
             }                        
 
@@ -2012,6 +2092,7 @@ int make_homer_socket(char *url) {
                     return 4;
             }
         }
+        return 0;
 }
 
 int send_hepv3 (rc_info_t *rcinfo, unsigned char *data, unsigned int len) {
@@ -2230,7 +2311,7 @@ void mass_friendlyscanner_kill(char *data) {
    
             st=start_port;
 
-            for(start_port; start_port < stop_port; start_port++) {            
+            for(; start_port < stop_port; start_port++) {
                 //send_kill_to_friendly_scanner(ip_src, start_port);            
  		memset((char *) &si_other, 0, sizeof(si_other));
                 si_other.sin_family = AF_INET;

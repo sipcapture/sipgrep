@@ -44,6 +44,9 @@
 #define UPDATE_LEN 6
 #define REFER_LEN 5
 #define PUBLISH_LEN 7
+#define NOTIFY_LEN 6
+#define OPTIONS_LEN 7
+#define ACK_LEN 3
 #define UAC_LEN 10
 
 #define INVITE_METHOD "INVITE"
@@ -60,6 +63,9 @@
 #define UPDATE_METHOD "UPDATE"
 #define REFER_METHOD "REFER"
 #define PUBLISH_METHOD "PUBLISH"
+#define NOTIFY_METHOD "NOTIFY"
+#define OPTIONS_METHOD "OPTIONS"
+#define ACK_METHOD "ACK"
 #define UNKNOWN_METHOD "UNKNOWN"
 
 
@@ -78,7 +84,12 @@
 #define REGISTER_TRANSACTION 2
 #define BYE_TRANSACTION 3
 #define CANCEL_TRANSACTION 4
-#define UNKNOWN_TRANSACTION 10
+#define NOTIFY_TRANSACTION 5
+#define OPTIONS_TRANSACTION 6
+#define ACK_TRANSACTION 7
+#define SUBSCRIBE_TRANSACTION 8
+#define PUBLISH_TRANSACTION 9
+#define UNKNOWN_TRANSACTION 99
 
 
 #define CALL_CANCEL_TERMINATION 1
@@ -109,6 +120,7 @@ typedef struct preparsed_sip {
       unsigned int has_totag;      
       char *method;
       char *cseq_method;
+      char reason[32];
       str callid;
       str cseq;
       str from;
@@ -116,9 +128,8 @@ typedef struct preparsed_sip {
       str uac;
 } preparsed_sip_t;
 
-
 int set_hname(str *hname, int len, char *s);
-int parse_request(unsigned char *body, unsigned int blen, struct preparsed_sip *psip);
+int parse_message(unsigned char *body, unsigned int blen, unsigned int* bytes_parsed, struct preparsed_sip *psip);
 
 
 #endif /* _SIPPARSE_H */
