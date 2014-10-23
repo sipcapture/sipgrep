@@ -87,7 +87,7 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A 
    -Q  is pcap_dump split condition:
         duration:NUM - switch to next file after NUM secs
         filesize:NUM - switch to next file after NUM KB
-   -a  is enable packet re-assemblation
+   -a  is disable packet re-assemblation
    -P  is use specified portrange instead of default 5060-5061
    -d  is use specified device instead of the pcap default
 
