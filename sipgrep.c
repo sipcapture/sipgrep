@@ -119,7 +119,7 @@ uint16_t snaplen = 65535, limitlen = 65535, promisc = 1, to = 100;
 uint16_t match_after = 0, keep_matching = 0, matches = 0, max_matches = 0;
 
 uint8_t  re_match_word = 0, re_ignore_case = 0, re_multiline_match = 1;
-uint8_t  show_empty = 0, show_proto = 0, quiet = 3	;
+uint8_t  show_empty = 0, show_proto = 0, quiet = 1;
 uint8_t  invert_match = 0;
 uint8_t  live_read = 1, want_delay = 0;
 uint8_t  dont_dropprivs = 0, ignore_bad_sip = 0;
@@ -178,7 +178,7 @@ void (*print_time)() = NULL, (*dump_delay)() = dump_delay_proc_init;
 uint32_t ws_row, ws_col = 80, ws_col_forced = 0;
 
 /* ip reasm */
-int8_t reasm_enable = 0;
+int8_t reasm_enable = 1;
 struct reasm_ip *reasm = NULL;   
 
 char *sip_from_filter = NULL, *sip_to_filter = NULL, *sip_contact_filter = NULL;
@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
                 limitlen = atoi(optarg);
                 break;
             case 'a':
-                reasm_enable = 1;
+                reasm_enable = 0;
                 break;                
             case 'q':
                 if(parse_stop_request(optarg) != 0) {
@@ -1827,7 +1827,7 @@ void usage(int8_t e) {
            "   -Q  is pcap_dump split condition:\n"
            "    	duration:NUM - switch to next file after NUM secs\n"
            "    	filesize:NUM - switch to next file after NUM KB\n"           
-           "   -a  is enable packet re-assemblation\n"
+           "   -a  is disable packet re-assemblation\n"
            "   -P  is use specified portrange instead of default 5060-5061\n"
            "   -d  is use specified device instead of the pcap default\n"
            "");
