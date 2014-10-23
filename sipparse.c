@@ -142,17 +142,18 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 								char method[32] = {0};
 								strncpy(method, tmp, offset2);
 
-								printf("UNKNOWN METHOD: %s\n", method);
+								printf("Unknown METHOD: %s\n", method);
 								psip->method = UNKNOWN_METHOD;
 							}
 		}
 	
         c=new_message+offset;
 
+        /* 
         char request_line[1024] = {0};
         strncpy(request_line, new_message, offset);
         printf("Request/Response line: %s\n", request_line);
-
+	*/
         int contentLengthFound = 0;
         int contentLength = 0;
 
