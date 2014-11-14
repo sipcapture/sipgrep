@@ -89,7 +89,7 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
                         
         if(offset == 0) { // likely Sip Message Body only...
 
-            *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
+            *bytes_parsed = c-new_message;
             return 0;
         }
 
@@ -119,7 +119,6 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 	    }
         else {
                 psip->is_method = SIP_REQUEST;
-                
 				if(!strncmp(tmp, REGISTER_METHOD, REGISTER_LEN)) psip->method = REGISTER_METHOD;
 						else if(!strncmp(tmp, INVITE_METHOD, INVITE_LEN)) psip->method = INVITE_METHOD;
 						else if(!strncmp(tmp, BYE_METHOD, BYE_LEN)) psip->method = BYE_METHOD;
@@ -275,7 +274,7 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
         }
 
         int message_parsed = 1;
-        *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message;
+        *bytes_parsed = c+2-new_message;
         if (contentLengthFound == 0) {
 
         	// incomplete packet encountered
@@ -289,13 +288,13 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 
 			packet = tmp;
 			packet_len = new_len;
-            *bytes_parsed = (unsigned int)c-(unsigned int)new_message;
+            *bytes_parsed = c-new_message;
             message_parsed = 0;
         }
-        else if (((unsigned int)c+2-(unsigned int)new_message + contentLength) < new_len) {
+        else if ((c+2-new_message + contentLength) < new_len) {
 
             // 2 packets or more merged together encountered
-            *bytes_parsed = (unsigned int)c+2-(unsigned int)new_message + contentLength;
+            *bytes_parsed = c+2-new_message + contentLength;
         }
         else if (packet) {
 

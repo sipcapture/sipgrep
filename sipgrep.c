@@ -988,6 +988,11 @@ void dump_packet(struct pcap_pkthdr *h, u_char *p, uint8_t proto, unsigned char 
         
     rc_info_t *rcinfo = NULL;
     int now = (unsigned) time(NULL);
+                
+    if(!isalpha(data[0]))
+    {
+        return;
+    }
         
     if(check_exit_deadline(now) == 0) {
         clean_exit(0);
