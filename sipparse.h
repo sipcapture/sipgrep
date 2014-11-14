@@ -31,8 +31,8 @@
 #define INVITE "INVITE"
 
 #define INVITE_LEN 6
-#define CANCEL_LEN 6
 #define ACK_LEN 3
+#define CANCEL_LEN 6
 #define BYE_LEN 3
 #define INFO_LEN 4
 #define REGISTER_LEN 8
@@ -50,8 +50,8 @@
 #define UAC_LEN 10
 
 #define INVITE_METHOD "INVITE"
-#define CANCEL_METHOD "CANCEL"
 #define ACK_METHOD "ACK"
+#define CANCEL_METHOD "CANCEL"
 #define BYE_METHOD "BYE"
 #define INFO_METHOD "INFO"
 #define REGISTER_METHOD "REGISTER"

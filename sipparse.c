@@ -119,32 +119,39 @@ int parse_message(unsigned char *message, unsigned int blen, unsigned int* bytes
 	    }
         else {
                 psip->is_method = SIP_REQUEST;
-				if(!strncmp(tmp, REGISTER_METHOD, REGISTER_LEN)) psip->method = REGISTER_METHOD;
-						else if(!strncmp(tmp, INVITE_METHOD, INVITE_LEN)) psip->method = INVITE_METHOD;
-						else if(!strncmp(tmp, BYE_METHOD, BYE_LEN)) psip->method = BYE_METHOD;
-						else if(!strncmp(tmp, CANCEL_METHOD, CANCEL_LEN)) psip->method = CANCEL_METHOD;
-						else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;
-						else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
-						else if(!strncmp(tmp, ACK_METHOD, ACK_LEN)) psip->method = ACK_METHOD;
-						else if(!strncmp(tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) psip->method = SUBSCRIBE_METHOD;
-						else if(!strncmp(tmp, PUBLISH_METHOD, PUBLISH_LEN)) psip->method = PUBLISH_METHOD;
-						else
-							{
-								int offset2 = 0;
-								unsigned char *c = tmp;
-								for (; *c; c++) {
-									if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
-										offset2 = c - tmp;
-										break;
-									}
-								}
-								char method[32] = {0};
-								strncpy(method, tmp, offset2);
 
-								printf("Unknown METHOD: %s\n", method);
-								psip->method = UNKNOWN_METHOD;
-							}
-		}
+                if(!strncmp(tmp, INVITE_METHOD, INVITE_LEN)) psip->method = INVITE_METHOD;
+                else if(!strncmp(tmp, ACK_METHOD, ACK_LEN)) psip->method = ACK_METHOD;
+		else if(!strncmp(tmp, BYE_METHOD, BYE_LEN)) psip->method = BYE_METHOD;
+		else if(!strncmp(tmp, CANCEL_METHOD, CANCEL_LEN)) psip->method = CANCEL_METHOD;
+		else if(!strncmp(tmp, OPTIONS_METHOD, OPTIONS_LEN)) psip->method = OPTIONS_METHOD;
+		else if(!strncmp(tmp, REGISTER_METHOD, REGISTER_LEN)) psip->method = REGISTER_METHOD;
+		else if(!strncmp(tmp, PRACK_METHOD, PRACK_LEN)) psip->method = PRACK_METHOD;
+		else if(!strncmp(tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) psip->method = SUBSCRIBE_METHOD;						
+		else if(!strncmp(tmp, NOTIFY_METHOD, NOTIFY_LEN)) psip->method = NOTIFY_METHOD;						
+		else if(!strncmp(tmp, PUBLISH_METHOD, PUBLISH_LEN)) psip->method = PUBLISH_METHOD;
+		else if(!strncmp(tmp, INFO_METHOD, INFO_LEN)) psip->method = INFO_METHOD;
+		else if(!strncmp(tmp, REFER_METHOD, REFER_LEN)) psip->method = REFER_METHOD;						
+		else if(!strncmp(tmp, MESSAGE_METHOD, MESSAGE_LEN)) psip->method = MESSAGE_METHOD;
+                else if(!strncmp(tmp, UPDATE_METHOD, UPDATE_LEN)) psip->method = UPDATE_METHOD;						
+		else
+                {
+		    int offset2 = 0;
+		    unsigned char *c = tmp;
+		    char method[32] = {0};
+		    
+		    for (; *c; c++) {
+		        if (*c == ' ' || (*c == '\n' && *(c-1) == '\r') || c-tmp > 31) {
+			    offset2 = c - tmp;
+			    break;
+			}
+                    }
+
+                    snprintf(method, sizeof(method), "%.*s", offset2, tmp);
+                    printf("Unknown METHOD: %s\n", method);
+                    psip->method = UNKNOWN_METHOD;
+                }
+        }
 	
         c=new_message+offset;
 
