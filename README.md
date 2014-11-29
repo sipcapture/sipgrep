@@ -23,7 +23,7 @@ On CentOS/RHEL: `yum install libpcap-devel pcre-devel`
 
 ```
 cd /usr/src
-git clone https://github.com/adubovikov/sipgrep.git
+git clone https://github.com/sipcapture/sipgrep.git
 ```
 
 ### Build and Install:
@@ -188,7 +188,7 @@ REASON: 407
 
 ```
 
-### Colored SIP:
+### Colorful SIP Output:
 
 ![Screenshot](https://cloud.githubusercontent.com/assets/4513061/2536095/2ca6e1f8-b599-11e3-9451-708b7c614f5f.png)
 
