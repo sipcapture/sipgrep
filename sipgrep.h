@@ -193,6 +193,18 @@ struct callid_remove {
 };
 
 
+/* HASH table */
+struct statistics_table {
+    char method[100];             /* key (string is WITHIN the structure) */
+    char orig_method[50];             /* key (string is WITHIN the structure) */
+    char cseq_method[50];             /* key (string is WITHIN the structure) */
+    int count;
+    int req;
+    int time;
+    UT_hash_handle hh;         /* makes this structure hashable */
+};
+
+
 void delete_dialogs_remove_element (char *callid);
 void delete_dialogs_element (char *callid);
 void check_dialogs_delete ();
@@ -201,6 +213,8 @@ void clear_all_dialogs_element();
 void send_kill_to_friendly_scanner(const char *ip, uint16_t port);
 int make_homer_socket(char *url);
 int send_hepv3 (rc_info_t *rcinfo, unsigned char *data, unsigned int len);
+int dump_statistics (unsigned int last, unsigned int now);
+
 
 #define SIP_CRASH "SIP/2.0 200 OK\r\nVia: SIP/2.0/UDP 8.7.6.5:5061;branch=z9hG4bK-573841574;rport\r\n\r\nContent-length: 0\r\n" \
 		  "From: \"100\"<sip:100@localhost>; tag=683a653a7901746865726501627965\r\nUser-agent: Telkom Box 2.4\r\n" \
