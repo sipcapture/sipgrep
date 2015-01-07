@@ -46,15 +46,16 @@ sipgrep: V2.01b
 
 ./sipgrep -h
 
-usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A num>
+usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJjxK> <-IO pcap_dump> <-n num> <-d dev> <-A num>
              <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>
                  <-f from user>  <-t to user> <-H capture url> <-q autostop cond.>
-                 <-Q split cond.> <-P portrange> <-F file>
+                 <-Q split cond.> <-P portrange> <-F file> <-z duration>
                  <match expression> <bpf filter>
    -h  is help/usage
    -V  is version information
    -e  is show empty packets
    -i  is ignore case
+   -x  is disable bad parsing notification
    -v  is invert match
    -R  is don't do privilege revocation logic
    -w  is word-regex (expression must match as a word)
@@ -81,6 +82,7 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A 
    -G  is print dialog report during clean up
    -J  is kill friendly scanner automatically
    -j  is kill friendly scanner automatically matching user agent string
+   -K  is kill friendly scanner providing IP and port/portrange i.e.: 10.0.0.1:5060-5090
    -q  is auto stop condition:
         duration:NUM - stop after NUM seconds
         filesize:NUM - stop this file after NUM KB
@@ -90,8 +92,8 @@ usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJj> <-IO pcap_dump> <-n num> <-d dev> <-A 
    -a  is disable packet re-assemblation
    -P  is use specified portrange instead of default 5060-5061
    -d  is use specified device instead of the pcap default
-
-
+   -z  is make statistics count maximum <duration> seconds
+   
 ```
 
 ### Examples:
