@@ -1157,6 +1157,7 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
       
       if (message_parsed == 0) {
 	// incomplete packet encountered, will deal with it whenever next packet comes in.
+	total_bytes_parsed = len;
 	continue;
       }
             
