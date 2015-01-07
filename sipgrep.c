@@ -1127,7 +1127,7 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
       free (rcinfo);
   }
   
-  if (check_exit_statistics(now) == 0) {
+  if (stats_enable && check_exit_statistics(now) == 0) {
       clean_exit (0);
       return;          
   }
