@@ -30,7 +30,7 @@ static unsigned char *packet = NULL;
 static unsigned int packet_len = 0;
 
 int
-set_hname (str * hname, int len, char *s)
+set_hname (str * hname, int len, unsigned char *s)
 {
 
   char *end;
@@ -82,6 +82,10 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
   last_offset = 0;
   offset = 0;
 
+  psip->transaction = UNKNOWN_TRANSACTION;
+  psip->cseq_method = UNKNOWN_METHOD;
+  psip->callid.len = 0;
+             
   /* Request/Response line */
   for (; *c && c - new_message < new_len; c++) {
     if (*c == '\n' && *(c - 1) == '\r') {
@@ -100,14 +104,14 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
   memset (psip->reason, 0, sizeof (psip->reason));
   psip->has_totag = 0;
 
-  tmp = (char *) new_message;
+  tmp = new_message;
 
   char sip20[] = { "SIP/2.0 " };
   int sipLen = strlen (sip20);
   int codeLen = 4;		// that is "200 " for example
 
-  if (!strncmp (sip20, tmp, sipLen)) {
-    psip->reply = atoi (tmp + sipLen);
+  if (!memcmp (sip20, tmp, sipLen)) {
+    psip->reply = atoi((char *)(tmp + sipLen));
     psip->is_method = SIP_REPLY;
 
     // Extract Response code's reason
@@ -117,39 +121,39 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
 	break;
       }
     }
-    strncpy (psip->reason, tmp + 12, reason - (tmp + sipLen + codeLen + 1 /*that's covering /r/n */ ));
+    memcpy (psip->reason, tmp + 12, reason - (tmp + sipLen + codeLen + 1 /*that's covering /r/n */ ));
 
   }
   else {
     psip->is_method = SIP_REQUEST;
 
-    if (!strncmp (tmp, INVITE_METHOD, INVITE_LEN))
+    if (!memcmp (tmp, INVITE_METHOD, INVITE_LEN))
       psip->method = INVITE_METHOD;
-    else if (!strncmp (tmp, ACK_METHOD, ACK_LEN))
+    else if (!memcmp (tmp, ACK_METHOD, ACK_LEN))
       psip->method = ACK_METHOD;
-    else if (!strncmp (tmp, BYE_METHOD, BYE_LEN))
+    else if (!memcmp (tmp, BYE_METHOD, BYE_LEN))
       psip->method = BYE_METHOD;
-    else if (!strncmp (tmp, CANCEL_METHOD, CANCEL_LEN))
+    else if (!memcmp (tmp, CANCEL_METHOD, CANCEL_LEN))
       psip->method = CANCEL_METHOD;
-    else if (!strncmp (tmp, OPTIONS_METHOD, OPTIONS_LEN))
+    else if (!memcmp (tmp, OPTIONS_METHOD, OPTIONS_LEN))
       psip->method = OPTIONS_METHOD;
-    else if (!strncmp (tmp, REGISTER_METHOD, REGISTER_LEN))
+    else if (!memcmp (tmp, REGISTER_METHOD, REGISTER_LEN))
       psip->method = REGISTER_METHOD;
-    else if (!strncmp (tmp, PRACK_METHOD, PRACK_LEN))
+    else if (!memcmp (tmp, PRACK_METHOD, PRACK_LEN))
       psip->method = PRACK_METHOD;
-    else if (!strncmp (tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN))
+    else if (!memcmp (tmp, SUBSCRIBE_METHOD, SUBSCRIBE_LEN))
       psip->method = SUBSCRIBE_METHOD;
-    else if (!strncmp (tmp, NOTIFY_METHOD, NOTIFY_LEN))
+    else if (!memcmp (tmp, NOTIFY_METHOD, NOTIFY_LEN))
       psip->method = NOTIFY_METHOD;
-    else if (!strncmp (tmp, PUBLISH_METHOD, PUBLISH_LEN))
+    else if (!memcmp (tmp, PUBLISH_METHOD, PUBLISH_LEN))
       psip->method = PUBLISH_METHOD;
-    else if (!strncmp (tmp, INFO_METHOD, INFO_LEN))
+    else if (!memcmp (tmp, INFO_METHOD, INFO_LEN))
       psip->method = INFO_METHOD;
-    else if (!strncmp (tmp, REFER_METHOD, REFER_LEN))
+    else if (!memcmp (tmp, REFER_METHOD, REFER_LEN))
       psip->method = REFER_METHOD;
-    else if (!strncmp (tmp, MESSAGE_METHOD, MESSAGE_LEN))
+    else if (!memcmp (tmp, MESSAGE_METHOD, MESSAGE_LEN))
       psip->method = MESSAGE_METHOD;
-    else if (!strncmp (tmp, UPDATE_METHOD, UPDATE_LEN))
+    else if (!memcmp (tmp, UPDATE_METHOD, UPDATE_LEN))
       psip->method = UPDATE_METHOD;
     else {
       int offset2 = 0;
@@ -197,7 +201,7 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
       /* To tag */
       if ((*tmp == 'T' && *(tmp + 1) == 'o' && *(tmp + TO_LEN) == ':') || (*tmp == 't' && *(tmp + 1) == ':')) {
 
-	if (!strncmp (tmp, "tag=", 4))
+	if (!memcmp (tmp, "tag=", 4))
 	  psip->has_totag = 1;
 
 	if (*(tmp + 1) == ':')
@@ -223,43 +227,43 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
       /* CSeq: 21 INVITE */
       else if (*tmp == 'C' && *(tmp + 1) == 'S' && *(tmp + CSEQ_LEN) == ':') {
 
-	if ((pch = strchr ((tmp + CSEQ_LEN + 2), ' ')) != NULL) {
+	if ((pch = strchr ((char const *)(tmp + CSEQ_LEN + 2), ' ')) != NULL) {
 
 	  pch++;
 
-	  if (!strncmp (pch, INVITE_METHOD, INVITE_LEN)) {
+	  if (!memcmp (pch, INVITE_METHOD, INVITE_LEN)) {
 	    psip->transaction = INVITE_TRANSACTION;
 	    psip->cseq_method = INVITE_METHOD;
 	  }
-	  else if (!strncmp (pch, REGISTER_METHOD, REGISTER_LEN)) {
+	  else if (!memcmp (pch, REGISTER_METHOD, REGISTER_LEN)) {
 	    psip->transaction = REGISTER_TRANSACTION;
 	    psip->cseq_method = REGISTER_METHOD;
 	  }
-	  else if (!strncmp (pch, BYE_METHOD, BYE_LEN)) {
+	  else if (!memcmp (pch, BYE_METHOD, BYE_LEN)) {
 	    psip->transaction = BYE_TRANSACTION;
 	    psip->cseq_method = BYE_METHOD;
 	  }
-	  else if (!strncmp (pch, CANCEL_METHOD, CANCEL_LEN)) {
+	  else if (!memcmp (pch, CANCEL_METHOD, CANCEL_LEN)) {
 	    psip->transaction = CANCEL_TRANSACTION;
 	    psip->cseq_method = CANCEL_METHOD;
 	  }
-	  else if (!strncmp (pch, NOTIFY_METHOD, NOTIFY_LEN)) {
+	  else if (!memcmp (pch, NOTIFY_METHOD, NOTIFY_LEN)) {
 	    psip->transaction = NOTIFY_TRANSACTION;
 	    psip->cseq_method = NOTIFY_METHOD;
 	  }
-	  else if (!strncmp (pch, OPTIONS_METHOD, OPTIONS_LEN)) {
+	  else if (!memcmp (pch, OPTIONS_METHOD, OPTIONS_LEN)) {
 	    psip->transaction = OPTIONS_TRANSACTION;
 	    psip->cseq_method = OPTIONS_METHOD;
 	  }
-	  else if (!strncmp (pch, ACK_METHOD, ACK_LEN)) {
+	  else if (!memcmp (pch, ACK_METHOD, ACK_LEN)) {
 	    psip->transaction = ACK_TRANSACTION;
 	    psip->cseq_method = ACK_METHOD;
 	  }
-	  else if (!strncmp (pch, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) {
+	  else if (!memcmp (pch, SUBSCRIBE_METHOD, SUBSCRIBE_LEN)) {
 	    psip->transaction = SUBSCRIBE_TRANSACTION;
 	    psip->cseq_method = SUBSCRIBE_METHOD;
 	  }
-	  else if (!strncmp (pch, PUBLISH_METHOD, PUBLISH_LEN)) {
+	  else if (!memcmp (pch, PUBLISH_METHOD, PUBLISH_LEN)) {
 	    psip->transaction = PUBLISH_TRANSACTION;
 	    psip->cseq_method = PUBLISH_METHOD;
 	  }
@@ -268,22 +272,27 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
 	    psip->cseq_method = UNKNOWN_METHOD;
 	  }
 
-	  psip->cseq_num = atoi (tmp + CSEQ_LEN + 1);
+	  psip->cseq_num = atoi((char *) (tmp + CSEQ_LEN + 1));
 	}
 
       }
       /* Call-ID: */
-      else if (*tmp == 'C' && (*(tmp + 5) == 'I' || *(tmp + 5) == 'i') && *(tmp + CALLID_LEN) == ':') {
+      else if ((*tmp == 'C' && (*(tmp + 5) == 'I' || *(tmp + 5) == 'i') && *(tmp + CALLID_LEN) == ':') || ( *tmp  == 'i' && *(tmp + 1) == ':') ) {
 
-	ret = set_hname (&psip->callid, (offset - last_offset - CALLID_LEN), tmp + CALLID_LEN);
+        if(*tmp  == 'i') cut = 2;        
+	else cut = 1+CALLID_LEN;
 
-	/* if(psip->callid.len > 6 && !strncmp(psip->callid.s + (psip->callid.len - 6), "_b2b-1", 6)) {
+	psip->callid.len = 0;
+	ret = set_hname (&psip->callid, (offset - last_offset - cut), tmp + cut);
+
+	/* if(psip->callid.len > 6 && !memcmp(psip->callid.s + (psip->callid.len - 6), "_b2b-1", 6)) {
 	   psip->callid.len-=6;
 	   }  
 	 */
       }
       /* Content-Length: */
-      else if (strncasecmp (tmp, "Content-Length:", 15) == 0) {
+      else if ((memcmp (tmp, "Content-Length:", 15) == 0) || (memcmp (tmp, "CONTENT-LENGTH:", 15) == 0))
+      {
 
 	contentLengthFound = 1;
 	int offset4 = 0;
@@ -295,7 +304,7 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
 	  }
 	}
 	char contentLengthStr[32] = { 0 };
-	strncpy (contentLengthStr, tmp + 16, offset4);
+	memcpy (contentLengthStr, tmp + 16, offset4);
 	contentLength = atoi (contentLengthStr);
       }
     }

@@ -935,10 +935,10 @@ int
 parse_stop_request (char *request)
 {
 
-  if (!strncmp (request, "duration:", 9)) {
+  if (!memcmp (request, "duration:", 9)) {
     stop_working_type = DURATION_SPLIT;
   }
-  else if (!strncmp (request, "filesize:", 9)) {
+  else if (!memcmp (request, "filesize:", 9)) {
     stop_working_type = FILESIZE_SPLIT;
   }
   else
@@ -957,10 +957,10 @@ int
 parse_split_request (char *request)
 {
 
-  if (!strncmp (request, "duration:", 9)) {
+  if (!memcmp (request, "duration:", 9)) {
     split_file_type = DURATION_SPLIT;
   }
-  else if (!strncmp (request, "filesize:", 9)) {
+  else if (!memcmp (request, "filesize:", 9)) {
     split_file_type = FILESIZE_SPLIT;
   }
   else
@@ -1041,6 +1041,8 @@ int dump_statistics (unsigned int last, unsigned int now)
         HASH_DEL (statstable, st);
         free (st);
     }
+    
+    return 1;
 }
 
 int check_exit_deadline (unsigned int now)
@@ -1202,7 +1204,14 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
       }
 
       if (!dialog_match) continue;
+      
+      if(psip.callid.len == 0) {
 
+        printf("BAD M:[%s]\n", data);
+        
+          exit(0);
+      }
+      
       snprintf (callid, sizeof (callid), "%.*s", psip.callid.len, psip.callid.s);
       s = (struct callid_table *) malloc (sizeof (struct callid_table));
       HASH_FIND_STR (dialogs, callid, s);
@@ -1211,7 +1220,7 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
 	// Sip Message found, update hash table
 	if (psip.is_method == SIP_REPLY) {	// This is a response
 
-	  if (!strcmp (psip.cseq_method, INVITE_METHOD)) {
+	  if (!memcmp (psip.cseq_method, INVITE_METHOD, INVITE_LEN)) {
 
 	    switch (psip.reply / 100) {
 
@@ -1605,7 +1614,7 @@ int8_t
 re_match_func (unsigned char *data, uint32_t len)
 {
 
-  switch (pcre_exec (pattern, 0, data, (int32_t) len, 0, 0, 0, 0)) {
+  switch (pcre_exec (pattern, 0, (char *)data, (int32_t) len, 0, 0, 0, 0)) {
   case PCRE_ERROR_NULL:
   case PCRE_ERROR_BADOPTION:
   case PCRE_ERROR_BADMAGIC:
@@ -1643,7 +1652,7 @@ void
 dump_byline (unsigned char *data, uint32_t len)
 {
   if (len > 0) {
-    const unsigned char *s = data;
+    unsigned char *s = data;
     int offset = 0, left = 0, via_found = 0;
     const unsigned char *pch = NULL, *pca = NULL;
     char *color;
@@ -1657,12 +1666,12 @@ dump_byline (unsigned char *data, uint32_t len)
 
 	if (offset == 0 && len > 100) {
 
-	  if (!strncmp ("SIP/2.0 ", s, 8)) {
+	  if (!memcmp ("SIP/2.0 ", s, 8)) {
 	    start = 8;
 	    stop = 0;
 	    color = BOLDYELLOW;
 	  }
-	  else if ((pch = strchr (s, ' ')) != NULL) {
+	  else if ((pch = strchr ((const char*) s, ' ')) != NULL) {
 	    start = 0;
 	    stop = pch - s + 1;
 	    color = BOLDRED;
@@ -1671,36 +1680,35 @@ dump_byline (unsigned char *data, uint32_t len)
 	}
 	else if ((left = (len - offset)) > 20) {
 
-	  if (!strncmp (s, "Call-ID:", 8)) {
+	  if (!memcmp (s, "Call-ID:", 8)) {
 	    start = offset + 8;
 	    stop = 0;
 	    color = BOLDMAGENTA;
 	  }
-	  else if (!strncmp (s, "From:", 5) || !strncmp (s, "f:", 2)) {
-	    pch = strstr (s, ";tag=");
+	  else if (!memcmp (s, "From:", 5) || !memcmp (s, "f:", 2)) {
+	    pch = strstr ((char *)s, ";tag=");
 	    if (pch != NULL) {
 	      start = offset + (pch - s + 1);
 	      stop = 0;
 	      color = BOLDBLUE;
 	    }
 	  }
-	  else if (!strncmp (s, "To:", 3) || !strncmp (s, "t:", 2)) {
-	    pch = strstr (s, ";tag=");
+	  else if (!memcmp (s, "To:", 3) || !memcmp (s, "t:", 2)) {
+	    pch = strstr ((char *)s, ";tag=");
 	    if (pch != NULL) {
 	      start = offset + (pch - s + 1);
 	      stop = 0;
 	      color = BOLDGREEN;
 	    }
 	  }
-	  else if (via_found == 0 && (!strncmp (s, "Via:", 4)
-				      || !strncmp (s, "v:", 2))) {
-	    pch = strstr (s, "branch=");
+	  else if (via_found == 0 && (!memcmp (s, "Via:", 4) || !memcmp (s, "v:", 2))) {
+	    pch = strstr ((char *)s, "branch=");
 	    if (pch != NULL) {
 	      start = offset + (pch - s);
-	      pca = strchr (pch, ';');
+	      pca = strchr ((char *)pch, ';');
 	      if (pca != NULL) {
 		stop = start + (pca - pch);
-		pca = strchr (pch, '\n');
+		pca = strchr ((char *)pch, '\n');
 		if (pca != NULL && (start + (pca - pch)) < stop)
 		  stop = start + (pca - pch);
 	      }
@@ -2160,7 +2168,7 @@ print_dialogs_stats (struct callid_table *s)
   if (!s)
     return;
 
-  unsigned int ringdelta = 0;
+  //unsigned int ringdelta = 0;
   unsigned int connectdelta = 0;
   unsigned int durationdelta = 0;
   int now = (unsigned) time (NULL);
@@ -2279,7 +2287,7 @@ send_kill_to_friendly_scanner (const char *ip, uint16_t port)
 {
 
   struct sockaddr_in si_other;
-  int s, i, slen = sizeof (si_other);
+  int s, slen = sizeof (si_other);
 
   if ((s = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     return;
@@ -2309,7 +2317,7 @@ make_homer_socket (char *url)
   char *ip, *tmp;
   char port[20];
   struct addrinfo *ai, hints[1] = { {0} };
-  int mode, i;
+  int i;
 
   ip = strchr (url, ':');
   if (ip != NULL) {
@@ -2365,7 +2373,7 @@ send_hepv3 (rc_info_t * rcinfo, unsigned char *data, unsigned int len)
 #endif
   hep_chunk_t payload_chunk;
   hep_chunk_t authkey_chunk;
-  static int errors = 0;
+  //static int errors = 0;
   char *capt_password = NULL;
 
   hg = malloc (sizeof (struct hep_generic));
@@ -2551,9 +2559,9 @@ mass_friendlyscanner_kill (char *data)
 
   char *pch, *ports;
   char ip_src[200];
-  int start_port = 0, stop_port = 0, st = 0, df = 0;
+  int start_port = 0, stop_port = 0, st = 0;
   struct sockaddr_in si_other;
-  int s, i, slen = sizeof (si_other);
+  int s, slen = sizeof (si_other);
 
 
   if ((pch = strchr (data, ':')) != NULL) {
