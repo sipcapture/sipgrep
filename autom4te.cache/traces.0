@@ -148,7 +148,7 @@ m4trace:configure.in:10: -1- AC_SUBST_TRACE([target_alias])
 m4trace:configure.in:10: -1- m4_pattern_allow([^target_alias$])
 m4trace:configure.in:17: -1- AC_CANONICAL_SYSTEM
 m4trace:configure.in:17: -1- _m4_warn([obsolete], [The macro `AC_CANONICAL_SYSTEM' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:1858: AC_CANONICAL_SYSTEM is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:1857: AC_CANONICAL_SYSTEM is expanded from...
 configure.in:17: the top level])
 m4trace:configure.in:17: -1- AC_CANONICAL_TARGET
 m4trace:configure.in:17: -1- AC_CANONICAL_HOST
@@ -250,7 +250,7 @@ m4trace:configure.in:23: -1- AC_SUBST([ac_prefix_program])
 m4trace:configure.in:23: -1- AC_SUBST_TRACE([ac_prefix_program])
 m4trace:configure.in:23: -1- m4_pattern_allow([^ac_prefix_program$])
 m4trace:configure.in:120: -1- _m4_warn([obsolete], [The macro `AC_CHECKING' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:2254: AC_CHECKING is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:2266: AC_CHECKING is expanded from...
 configure.in:120: the top level])
 m4trace:configure.in:122: -1- AC_DEFINE_TRACE_LITERAL([USE_PCRE])
 m4trace:configure.in:122: -1- m4_pattern_allow([^USE_PCRE$])
@@ -260,7 +260,7 @@ m4trace:configure.in:139: -1- AC_SUBST([OS], [LINUX])
 m4trace:configure.in:139: -1- AC_SUBST_TRACE([OS])
 m4trace:configure.in:139: -1- m4_pattern_allow([^OS$])
 m4trace:configure.in:142: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:2602: AC_TRY_COMPILE is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:2614: AC_TRY_COMPILE is expanded from...
 configure.in:142: the top level])
 m4trace:configure.in:164: -1- AC_SUBST([OS], [BSD])
 m4trace:configure.in:164: -1- AC_SUBST_TRACE([OS])
