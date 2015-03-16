@@ -14,7 +14,7 @@
  *
  */
 
-#define VERSION "2.0.0-dev"
+#define VERSION "2.1.0-dev"
 
 /*
  * We cache the standard frame sizes here to save us time and
