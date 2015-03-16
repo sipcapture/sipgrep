@@ -1284,7 +1284,7 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
             if(psip.callid.len == 0) 
             {
                     printf("BAD M:[%s]\n", d);        
-                    exit(0);
+                    continue;
             }
       
             snprintf (callid, sizeof (callid), "%.*s", psip.callid.len, psip.callid.s);
