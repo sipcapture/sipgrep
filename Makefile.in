@@ -15,8 +15,8 @@ LIBS=-lpcap @EXTRA_LIBS@
 
 STRIPFLAG=@STRIPFLAG@
 
-SRC=sipgrep.c sipparse.c ipreasm.c
-OBJS=sipgrep.o sipparse.o ipreasm.o
+SRC=sipgrep.c sipparse.c ipreasm.c tcpreasm.c
+OBJS=sipgrep.o sipparse.o ipreasm.o tcpreasm.o
 TARGET=sipgrep
 MANPAGE=sipgrep.8
 
