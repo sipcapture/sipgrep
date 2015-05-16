@@ -8,6 +8,7 @@ dnl
 dnl NOTE: configure.in requires autoconf 2.57 or more recent.
 
 AC_INIT([sipgrep], [trunk], [http://www.sipcapture.org])
+AM_INIT_AUTOMAKE([1.12 foreign no-define])
 
 
 echo
