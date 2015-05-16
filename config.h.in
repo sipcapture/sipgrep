@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* pseudo-user for running sipgrep (default "nobody") */
 #undef DROPPRIVS_USER

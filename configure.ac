@@ -15,9 +15,9 @@ echo
 echo 'Configuring System ...'
 echo
 
-AC_CANONICAL_SYSTEM
 AC_PROG_CC
 AC_HEADER_STDC
+AC_CANONICAL_SYSTEM
 
 AC_PREFIX_DEFAULT(/usr/local) 
 if test -n "`which tcpdump 2> /dev/null`"; then
