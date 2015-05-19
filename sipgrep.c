@@ -1436,7 +1436,7 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
             {
                 // Sip Message not found, add it to hash table
                 local_match = match_func (d, len);
-                if (local_match == 1 || local_match != invert_match) 
+                if (local_match == 1 && !invert_match || local_match != invert_match) 
                 {
                     if (dialog_match) 
                     {
