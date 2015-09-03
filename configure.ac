@@ -8,6 +8,7 @@ dnl
 dnl NOTE: configure.in requires autoconf 2.57 or more recent.
 
 AC_INIT([sipgrep], [trunk], [http://www.sipcapture.org])
+AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([1.12 foreign no-define])
 
 
@@ -17,7 +18,6 @@ echo
 
 AC_PROG_CC
 AC_HEADER_STDC
-AC_CANONICAL_SYSTEM
 
 AC_PREFIX_DEFAULT(/usr/local) 
 if test -n "`which tcpdump 2> /dev/null`"; then
