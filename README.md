@@ -1,3 +1,5 @@
+![Build-Status](https://travis-ci.org/sipcapture/sipgrep.svg)
+
 SipGrep 2
 =======
 
