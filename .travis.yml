@@ -1,0 +1,15 @@
+language: c
+
+compiler:
+  - gcc
+
+install: 
+  - sudo apt-get update || true
+  - sudo apt-get install build-essential
+  - sudo apt-get install libpcap-dev libpcre3-dev autoconf automake autogen
+
+script:
+  - ./build.sh
+  - ./configure
+  - make
+  - ./sipgrep -h
