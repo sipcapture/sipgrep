@@ -32,7 +32,7 @@ git clone https://github.com/sipcapture/sipgrep.git
 
 ```
 cd sipgrep
-./build.sh
+./build.sh (optional)
 ./configure
 make && make install
 ```
