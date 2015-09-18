@@ -1,8 +1,14 @@
-sipgrep (2.1.0~dev) UNRELEASED; urgency=medium
+sipgrep (2.2.0~dev) UNRELEASED; urgency=medium
 
   * Devel version
 
- -- Victor Seva <linuxmaniac@torreviejawireless.org>  Mon, 31 Mar 2014 08:41:07 +0200
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Fri, 18 Sep 2015 10:17:49 +0200
+
+sipgrep (2.1.0) unstable; urgency=medium
+
+  * New release
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Fri, 18 Sep 2015 10:17:33 +0200
 
 sipgrep (2.0.0) unstable; urgency=low
 
