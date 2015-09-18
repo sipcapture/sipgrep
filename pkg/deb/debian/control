@@ -3,12 +3,13 @@ Section: net
 Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Victor Seva <linuxmaniac@torreviejawireless.org>
-Build-Depends: debhelper (>= 9),
-               dpkg-dev (>= 1.16.1.1),
+Build-Depends: autotools-dev,
+               debhelper (>= 9),
+               dpkg-dev (>= 1.16.1~),
                libpcap-dev,
                libpcre3-dev,
-Standards-Version: 3.9.5
-Homepage: https://github.com/adubovikov/sipgrep
+Standards-Version: 3.9.6
+Homepage: https://github.com/sipcapture/sipgrep
 Vcs-git: git://anonscm.debian.org/pkg-voip/sipgrep.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-voip/sipgrep.git
 
