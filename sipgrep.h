@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2006  Jordan Ritter <jpr5@darkridge.com>
  *
- * Please refer to the LICENSE file for more information.
+ * Please refer to the COPYING file for more information.
  *
  */
 

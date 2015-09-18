@@ -3,7 +3,7 @@ dnl $Id: configure.in,v 1.36 2006/11/15 03:43:56 jpr5 Exp $
 dnl
 dnl Copyright (c) 2001  Jordan Ritter <jpr5@darkridge.com>
 dnl
-dnl Please refer to the LICENSE file for more information.
+dnl Please refer to the COPYING file for more information.
 dnl
 dnl NOTE: configure.in requires autoconf 2.57 or more recent.
 
