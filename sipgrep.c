@@ -731,6 +731,7 @@ process (u_char * d, struct pcap_pkthdr *h, u_char * p)
   uint8_t ip_proto = 0;
   uint32_t ip_hl = 0;
   uint32_t ip_off = 0;
+  uint16_t ip_len = 0;
 
   uint8_t fragmented = 0;
   uint16_t frag_offset = 0;
@@ -786,6 +787,7 @@ process (u_char * d, struct pcap_pkthdr *h, u_char * p)
 #endif
       ip_proto = ip4_pkt->ip_p;
       ip_off = ntohs (ip4_pkt->ip_off);
+      ip_len = ntohs(ip4_pkt->ip_len);
 
       fragmented = ip_off & (IP_MF | IP_OFFMASK);
       frag_offset = (fragmented) ? (ip_off & IP_OFFMASK) * 8 : 0;
@@ -801,6 +803,7 @@ process (u_char * d, struct pcap_pkthdr *h, u_char * p)
     {
       ip_hl = sizeof (struct ip6_hdr);
       ip_proto = ip6_pkt->ip6_nxt;
+      ip_len = ntohs (ip6_pkt->ip6_plen) + ip_hl;
 
       if (ip_proto == IPPROTO_FRAGMENT) {
 	struct ip6_frag *ip6_fraghdr;
@@ -820,6 +823,10 @@ process (u_char * d, struct pcap_pkthdr *h, u_char * p)
     break;
 #endif
   }
+
+  /* ip size captured mismatch */
+  if (len > link_offset + ip_len)
+    len = link_offset + ip_len;
 
   if (quiet < 1) {
     printf ("#");
