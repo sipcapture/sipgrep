@@ -22,7 +22,7 @@
 #include <netinet/ip6.h>
 #endif /* USE_IPv6 */
 
-extern int debug;
+extern uint8_t debug;
 
 #include "tcpreasm.h"
 
