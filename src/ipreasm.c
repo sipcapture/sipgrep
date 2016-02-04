@@ -20,7 +20,7 @@
 #include <netinet/ip6.h>
 #endif /* USE_IPv6 */
 
-#include "ipreasm.h"
+#include "include/ipreasm.h"
 
 
 #define REASM_IP_HASH_SIZE 1021U

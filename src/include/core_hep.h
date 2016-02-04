@@ -23,29 +23,12 @@
 */
 
 
+#ifndef _core_hep_H_
+#define _core_hep_H_
+
 #ifdef USE_IPV6
 #include <netinet/ip6.h>
 #endif /* USE_IPV6 */
-
-int hep_version = 3;
-int usessl = 0;
-int pl_compress = 0;
-
-
-struct rc_info {
-    uint8_t     ip_family; /* IP family IPv6 IPv4 */
-    uint8_t     ip_proto; /* IP protocol ID : tcp/udp */
-    uint8_t     proto_type; /* SIP: 0x001, SDP: 0x03*/
-    const char  *src_ip;
-    const char  *dst_ip;
-    uint16_t    src_port;
-    uint16_t    dst_port;
-    uint32_t    time_sec;
-    uint32_t    time_usec;
-} ;
-
-typedef struct rc_info rc_info_t;
-
 
 /* HEPv3 types */
 
@@ -155,3 +138,6 @@ struct hep_ip6hdr {
         struct in6_addr hp6_dst;        /* destination address */
 };
 #endif
+
+#endif /* _core_hep_H_ */
+

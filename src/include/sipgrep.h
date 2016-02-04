@@ -6,15 +6,7 @@
  *
  * Copyright (c) 2013-14  Alexandr Dubovikov <alexandr.dubovikov@gmail.com> 
  *
- * Partly base on NGREP of:
- *
- * Copyright (c) 2006  Jordan Ritter <jpr5@darkridge.com>
- *
- * Please refer to the COPYING file for more information.
- *
  */
-
-#define VERSION "2.1.0"
 
 /*
  * We cache the standard frame sizes here to save us time and
@@ -211,8 +203,6 @@ void check_dialogs_delete ();
 void print_dialogs_stats(struct callid_table *s);
 void clear_all_dialogs_element();
 void send_kill_to_friendly_scanner(const char *ip, uint16_t port);
-int make_homer_socket(char *url);
-int send_hepv3 (rc_info_t *rcinfo, unsigned char *data, unsigned int len);
 int dump_statistics (unsigned int last, unsigned int now);
 
 
