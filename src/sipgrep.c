@@ -110,6 +110,11 @@
 #include "include/transport_hep.h"
 #endif
 
+
+#ifdef USE_NCURSES
+#include "include/user_interface.h"
+#endif
+
 #include "include/sipgrep.h"
 #include "include/sipparse.h"
 
@@ -127,7 +132,7 @@ uint32_t last_stats_dump = 0;
 uint8_t debug = 0;
 
 uint8_t re_match_word = 0, re_ignore_case = 0, re_multiline_match = 1;
-uint8_t show_empty = 0, show_proto = 0, quiet = 1;
+uint8_t show_empty = 0, show_proto = 0, quiet = 1, show_ui = 0;
 uint8_t invert_match = 0;
 uint8_t live_read = 1, want_delay = 0;
 uint8_t dont_dropprivs = 0, ignore_bad_sip = 0;
@@ -234,7 +239,7 @@ main (int argc, char **argv)
   
   start_time = (unsigned) time (NULL);
 
-  while ((c = getopt (argc, argv, "axNhCXViwmpevlDTRMGJgs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:K:Q:z:"))
+  while ((c = getopt (argc, argv, "axNhCXViwmpevlDTRMGJgUs:n:c:q:H:d:A:I:O:S:F:P:f:t:j:K:Q:z:"))
 	 != EOF) {
     switch (c) {
 
@@ -372,6 +377,9 @@ main (int argc, char **argv)
     case 'N':
       show_proto++;
       break;
+    case 'U':
+      show_ui++;
+      break;      
     case 'h':
       usage (0);
       break;
@@ -379,10 +387,16 @@ main (int argc, char **argv)
       usage (-1);
     }
   }
+  
+  if(show_ui) {
+#ifdef USE_NCURSES  
+    show_userinterface();
+#else
+   LERR("sipgrep has been compiled without ncurses support!");
+#endif    
+    clean_exit (-1);  
 
-
-
-
+  }
 
   /* make kill range */
   if (kill_friendlyscanner == 2) {

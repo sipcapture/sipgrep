@@ -189,9 +189,10 @@ dnl
 if test "$NCURSES" = "yes"; then
 	AC_CHECKING([for ncurses Library and Header files])
 	AC_CHECK_HEADER([ncurses.h], ,AC_MSG_ERROR([Could not find ncurses headers !]))
-	AC_CHECK_LIB([ncurses], [initscr], [EXTRA_LIBS="${EXTRA_LIBS} -lncurses"], [AC_MSG_ERROR([libncurses required])])
+	AC_CHECK_LIB([ncurses], [initscr],, [AC_MSG_ERROR([libncurses required])])
 	AC_DEFINE(USE_NCURSES, 1, [Use NCURSES library])
 	AC_SUBST(NCURSES_LIBS)
+	AC_SUBST(USE_NCURSES, yes)   
 fi
 
 
@@ -202,7 +203,7 @@ dnl
 if test "$ZLIB" = "yes"; then
    AC_CHECKING([for zip Library and Header files])
    AC_CHECK_HEADER(zlib.h,,[AC_MSG_ERROR([zlib.h headers not found.])])
-   AC_CHECK_LIB(z, inflate, [ LIBS="${LIBS} -lz" ], [AC_MSG_ERROR([sipgrep requires but cannot find lz])])
+   AC_CHECK_LIB(z, inflate, , [AC_MSG_ERROR([sipgrep requires but cannot find lz])])
    AC_DEFINE(USE_ZLIB, 1, [Use ZIP library])
 fi
 
@@ -213,7 +214,7 @@ dnl
 if test "$REDIS" = "yes"; then
    AC_CHECKING([for redis Library and Header files])
    AC_CHECK_HEADER(hiredis/hiredis.h,,[AC_MSG_ERROR([hiredis/hiredis.h headers not found.])])
-   AC_CHECK_LIB(hiredis, redisCommand, [ LIBS="${LIBS} -lhiredis" ], [AC_MSG_ERROR([sipgrep requires but cannot find lhiredis])])
+   AC_CHECK_LIB(hiredis, redisCommand, , [AC_MSG_ERROR([sipgrep requires but cannot find lhiredis])])
    AC_DEFINE(USE_REDIS, 1, [Use REDIS library])
    AC_SUBST(HIREDIS_LIBS)
 fi
@@ -226,7 +227,7 @@ dnl
 if test "$SSL" = "yes"; then
    AC_CHECKING([for OpenSSL SSL Library and Header files])
    AC_CHECK_HEADER(openssl/ssl.h,, [AC_MSG_ERROR([OpenSSL SSL headers not found.])])	
-   AC_CHECK_LIB(ssl, SSL_accept, [ LIBS="${LIBS} -lssl" ], [AC_MSG_ERROR([sipgrep requires but cannot find ssl])])
+   AC_CHECK_LIB(ssl, SSL_accept, , [AC_MSG_ERROR([sipgrep requires but cannot find ssl])])
    AC_DEFINE(USE_SSL, 1, [Use OpenSSL SSL library])
 fi
 
@@ -235,6 +236,7 @@ AC_CHECK_HEADER(pcap.h,,[AC_MSG_ERROR([sipgrep cannot find pcap.h])])
 
 # conditional checks
 AM_CONDITIONAL([HAVE_HEP],[test "x$HAVE_HEP" == "xyes"])
+AM_CONDITIONAL([USE_NCURSES],[test "x$USE_NCURSES" == "xyes"])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT32_T

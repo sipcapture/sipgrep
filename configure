@@ -637,9 +637,12 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+USE_NCURSES_FALSE
+USE_NCURSES_TRUE
 HAVE_HEP_FALSE
 HAVE_HEP_TRUE
 HIREDIS_LIBS
+USE_NCURSES
 NCURSES_LIBS
 PCRE_LIBS
 PCAP_LIBS
@@ -12872,7 +12875,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ncurses_initscr" >&5
 $as_echo "$ac_cv_lib_ncurses_initscr" >&6; }
 if test "x$ac_cv_lib_ncurses_initscr" = xyes; then :
-  EXTRA_LIBS="${EXTRA_LIBS} -lncurses"
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBNCURSES 1
+_ACEOF
+
+  LIBS="-lncurses $LIBS"
+
 else
   as_fn_error $? "libncurses required" "$LINENO" 5
 fi
@@ -12880,6 +12888,8 @@ fi
 
 $as_echo "#define USE_NCURSES 1" >>confdefs.h
 
+
+	USE_NCURSES=yes
 
 fi
 
@@ -12933,7 +12943,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_z_inflate" >&5
 $as_echo "$ac_cv_lib_z_inflate" >&6; }
 if test "x$ac_cv_lib_z_inflate" = xyes; then :
-   LIBS="${LIBS} -lz"
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBZ 1
+_ACEOF
+
+  LIBS="-lz $LIBS"
+
 else
   as_fn_error $? "sipgrep requires but cannot find lz" "$LINENO" 5
 fi
@@ -12992,7 +13007,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hiredis_redisCommand" >&5
 $as_echo "$ac_cv_lib_hiredis_redisCommand" >&6; }
 if test "x$ac_cv_lib_hiredis_redisCommand" = xyes; then :
-   LIBS="${LIBS} -lhiredis"
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBHIREDIS 1
+_ACEOF
+
+  LIBS="-lhiredis $LIBS"
+
 else
   as_fn_error $? "sipgrep requires but cannot find lhiredis" "$LINENO" 5
 fi
@@ -13053,7 +13073,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_accept" >&5
 $as_echo "$ac_cv_lib_ssl_SSL_accept" >&6; }
 if test "x$ac_cv_lib_ssl_SSL_accept" = xyes; then :
-   LIBS="${LIBS} -lssl"
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSSL 1
+_ACEOF
+
+  LIBS="-lssl $LIBS"
+
 else
   as_fn_error $? "sipgrep requires but cannot find ssl" "$LINENO" 5
 fi
@@ -13080,6 +13105,14 @@ fi
 else
   HAVE_HEP_TRUE='#'
   HAVE_HEP_FALSE=
+fi
+
+ if test "x$USE_NCURSES" == "xyes"; then
+  USE_NCURSES_TRUE=
+  USE_NCURSES_FALSE='#'
+else
+  USE_NCURSES_TRUE='#'
+  USE_NCURSES_FALSE=
 fi
 
 
@@ -13586,6 +13619,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_HEP_TRUE}" && test -z "${HAVE_HEP_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_HEP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USE_NCURSES_TRUE}" && test -z "${USE_NCURSES_FALSE}"; then
+  as_fn_error $? "conditional \"USE_NCURSES\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

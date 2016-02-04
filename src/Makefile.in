@@ -53,6 +53,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = sipgrep$(EXEEXT)
 @HAVE_HEP_TRUE@am__append_1 = transport_hep.c
+@USE_NCURSES_TRUE@am__append_2 = user_interface.c
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in
@@ -70,10 +71,12 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__sipgrep_SOURCES_DIST = sipgrep.c log.c ipreasm.c tcpreasm.c \
-	sipparse.c transport_hep.c
+	sipparse.c transport_hep.c user_interface.c
 @HAVE_HEP_TRUE@am__objects_1 = transport_hep.$(OBJEXT)
+@USE_NCURSES_TRUE@am__objects_2 = user_interface.$(OBJEXT)
 am_sipgrep_OBJECTS = sipgrep.$(OBJEXT) log.$(OBJEXT) ipreasm.$(OBJEXT) \
-	tcpreasm.$(OBJEXT) sipparse.$(OBJEXT) $(am__objects_1)
+	tcpreasm.$(OBJEXT) sipparse.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2)
 sipgrep_OBJECTS = $(am_sipgrep_OBJECTS)
 sipgrep_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -176,6 +179,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SSL = @SSL@
 STRIP = @STRIP@
+USE_NCURSES = @USE_NCURSES@
 VERSION = @VERSION@
 ZLIB = @ZLIB@
 abs_builddir = @abs_builddir@
@@ -232,9 +236,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 #AM_CFLAGS = -g -fPIC -rdynamic -I$(top_srcdir)/src/include ${EXTRA_DEFINES}
 #AM_CPPFLAGS = -DSYSCONFDIR='"$(sysconfdir)"' -I$(top_srcdir)/src/include
-#sipgrep_LDADD = {EXTRA_LIBS}
+#sipgrep_LDADD = $(LIBOBJS)
 sipgrep_SOURCES = sipgrep.c log.c ipreasm.c tcpreasm.c sipparse.c \
-	$(am__append_1)
+	$(am__append_1) $(am__append_2)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -347,6 +351,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sipparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpreasm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transport_hep.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/user_interface.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

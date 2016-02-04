@@ -206,6 +206,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SSL = @SSL@
 STRIP = @STRIP@
+USE_NCURSES = @USE_NCURSES@
 VERSION = @VERSION@
 ZLIB = @ZLIB@
 abs_builddir = @abs_builddir@
