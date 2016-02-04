@@ -12,7 +12,7 @@ script:
   - ./build.sh
   - ./configure
   - make
-  - ./sipgrep -h
+  - ./src/sipgrep -h
 
 notifications:
   slack: qxip:WuEGMSIAa8KEX6iL2zN2bZbv
