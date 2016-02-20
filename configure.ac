@@ -66,9 +66,8 @@ AC_ARG_ENABLE(ipv6,
 ]) 
 
 if test $use_ipv6 = yes; then
-   USE_IPv6="1"
-else
-   USE_IPv6="0"
+   AC_DEFINE(USE_IPv6, [1], [IPv6 (and ICMPv6) support])
+   AC_SUBST(USE_IPv6, yes)
 fi
 
 
@@ -264,6 +263,7 @@ echo $PACKAGE $VERSION
 echo
 echo Build directory............. : $sipgrep_builddir
 echo Installation prefix......... : $prefix
+echo IPv6 support.................: $use_ipv6
 echo HEP support................. : $enableHEP
 echo HEP Compression............. : $enableCompression
 echo SSL/TLS..................... : $enableSSL
