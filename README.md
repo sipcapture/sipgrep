@@ -1,4 +1,4 @@
-![Build-Status](https://travis-ci.org/sipcapture/sipgrep.svg)
+[![Build Status](https://travis-ci.org/sipcapture/sipgrep.svg?branch=master)](https://travis-ci.org/sipcapture/sipgrep)
 
 SipGrep 2
 =======
