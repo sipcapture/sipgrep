@@ -22,7 +22,7 @@ On CentOS/RHEL: `yum install libpcap-devel pcre-devel`
 ## Installation
 
 ### Debian
-Sipgrep is available as [Debian package](https://ftp-master.debian.org/new/sipgrep_2.1.0-1.html) (Thanks @linuxmaniac)
+Sipgrep is available as [Debian package](https://packages.debian.org/sid/net/sipgrep) (Thanks @linuxmaniac)
 
 ### Clone from GIT:
 
