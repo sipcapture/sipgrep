@@ -24,6 +24,9 @@ On CentOS/RHEL: `yum install libpcap-devel pcre-devel`
 ### Debian
 Sipgrep is available as [Debian package](https://packages.debian.org/sid/net/sipgrep) (Thanks @linuxmaniac)
 
+### LEDE / OpenWRT
+Sipgrep is available as [package](https://github.com/openwrt/packages/tree/master/net/sipgrep) in trunk, `opkg install sipgrep`
+
 ### Clone from GIT:
 
 ```
