@@ -1301,7 +1301,6 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
             }
       
             snprintf (callid, sizeof (callid), "%.*s", psip.callid.len, psip.callid.s);
-            s = (struct callid_table *) malloc (sizeof (struct callid_table));
             HASH_FIND_STR (dialogs, callid, s);
             if (s) 
             {
