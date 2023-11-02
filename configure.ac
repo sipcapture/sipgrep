@@ -26,8 +26,8 @@ AC_ARG_ENABLE(ssl,
 AC_MSG_RESULT([$SSL])
 AC_SUBST([SSL])
 
-usePCRE=yes
-AC_SUBST([PCRE])
+usePCRE2=yes
+AC_SUBST([PCRE2])
 
 useNCURSES=no
 AC_MSG_CHECKING([whether to use ncurses])
@@ -169,15 +169,15 @@ AC_SUBST(PCAP_LIBS)
 
 
 dnl
-dnl check for pcre library
+dnl check for pcre2 library
 dnl
 
-# Checks for libpcre
-AC_CHECKING([for pcre Library and Header files])
-AC_CHECK_HEADER([pcre.h], ,AC_MSG_ERROR([Could not find pcre headers !]))
-AC_CHECK_LIB([pcre], [pcre_compile], ,[AC_MSG_ERROR([libpcre required])])
-AC_DEFINE(USE_PCRE, 1, [Use PCRE library])
-AC_SUBST(PCRE_LIBS)
+# Checks for libpcre2
+AC_CHECKING([for pcre2 Library and Header files])
+AC_CHECK_HEADER([pcre2.h], ,AC_MSG_ERROR([Could not find pcre2 headers !]), [#define PCRE2_CODE_UNIT_WIDTH 8])
+AC_CHECK_LIB([pcre2-8], [pcre2_compile_8], ,[AC_MSG_ERROR([libpcre2 required])])
+AC_DEFINE(USE_PCRE2, 1, [Use PCRE2 library])
+AC_SUBST(PCRE2_LIBS)
 
 
 dnl
@@ -271,6 +271,6 @@ echo Ncurses support............. : $useNCURSES
 
 echo
 echo Build with REDIS............ : $useRedis
-echo Build with PCRE............. : $usePCRE
+echo Build with PCRE............. : $usePCRE2
 echo
 
