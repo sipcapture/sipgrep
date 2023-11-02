@@ -152,8 +152,8 @@
 /* Use NCURSES library */
 #undef USE_NCURSES
 
-/* Use PCRE library */
-#undef USE_PCRE
+/* Use PCRE2 library */
+#undef USE_PCRE2
 
 /* Use REDIS library */
 #undef USE_REDIS

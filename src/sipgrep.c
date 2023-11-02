@@ -88,7 +88,8 @@
 
 #include <netdb.h>
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 /* reasambling */
 #include "include/ipreasm.h"
@@ -149,17 +150,18 @@ struct statistics_table *statstable = NULL;
  * GNU PCRE
  */
 
-int32_t err_offset;
-char *re_err = NULL;
+PCRE2_UCHAR re_err[128];
+PCRE2_SIZE err_offset;
+uint32_t err_code;
 
-pcre *pattern = NULL;
-pcre_extra *pattern_extra = NULL;
+pcre2_code *pattern = NULL;
 
 /*
  * Matching
  */
 
-char *match_data = NULL, *bin_data = NULL;
+PCRE2_SPTR match_data = NULL;
+char *bin_data = NULL;
 uint16_t match_len = 0;
 int8_t (*match_func) () = &blank_match_func;
 
@@ -550,13 +552,13 @@ main (int argc, char **argv)
 
   if (match_data) {
 
-    uint32_t pcre_options = PCRE_UNGREEDY;
+    uint32_t pcre2_options = PCRE2_UNGREEDY;
 
     if (re_ignore_case)
-      pcre_options |= PCRE_CASELESS;
+      pcre2_options |= PCRE2_CASELESS;
 
     if (re_multiline_match)
-      pcre_options |= PCRE_DOTALL;
+      pcre2_options |= PCRE2_DOTALL;
 
     if (re_match_word) {
       char *word_regex = malloc (strlen (match_data) * 3 + strlen (WORD_REGEX));
@@ -564,14 +566,21 @@ main (int argc, char **argv)
       match_data = word_regex;
     }
 
-    pattern = pcre_compile (match_data, pcre_options, (const char **) &re_err, &err_offset, 0);
+    pattern = pcre2_compile (match_data, PCRE2_ZERO_TERMINATED, pcre2_options, &err_code, &err_offset, 0);
 
     if (!pattern) {
+      pcre2_get_error_message (err_code, re_err, 128);
       fprintf (stderr, "compile failed: %s\n", re_err);
       clean_exit (-1);
     }
 
-    pattern_extra = pcre_study (pattern, 0, (const char **) &re_err);
+    err_code = pcre2_jit_compile (pattern, PCRE2_JIT_COMPLETE);
+
+    if (err_code < 0) {
+      pcre2_get_error_message(err_code, re_err, 128);
+      fprintf (stderr, "compile failed: %s\n", re_err);
+      clean_exit (-1);
+    }
 
     match_func = &re_match_func;
 
@@ -1653,20 +1662,27 @@ dump_packet (struct pcap_pkthdr *h, u_char * p, uint8_t proto, unsigned char *da
 int8_t
 re_match_func (unsigned char *data, uint32_t len)
 {
+  pcre2_match_data *match_data;
 
-  switch (pcre_exec (pattern, 0, (char *)data, (int32_t) len, 0, 0, 0, 0)) {
-  case PCRE_ERROR_NULL:
-  case PCRE_ERROR_BADOPTION:
-  case PCRE_ERROR_BADMAGIC:
-  case PCRE_ERROR_UNKNOWN_NODE:
-  case PCRE_ERROR_NOMEMORY:
+  match_data = pcre2_match_data_create_from_pattern(pattern, 0);
+
+  switch (pcre2_match (pattern, (PCRE2_SPTR)data, len, 0, 0, match_data, 0)) {
+  case PCRE2_ERROR_NULL:
+  case PCRE2_ERROR_BADOPTION:
+  case PCRE2_ERROR_BADMAGIC:
+  case PCRE2_ERROR_INTERNAL:
+  case PCRE2_ERROR_NOMEMORY:
+    pcre2_match_data_free(match_data);
     perror ("she's dead, jim\n");
     clean_exit (-2);
     break;
 
-  case PCRE_ERROR_NOMATCH:
+  case PCRE2_ERROR_NOMATCH:
+    pcre2_match_data_free(match_data);
     return 0;
   }
+
+  pcre2_match_data_free(match_data);
 
   if (max_matches)
     matches++;
@@ -2125,9 +2141,7 @@ clean_exit (int32_t sig)
     printf ("exit\n");
 
   if (pattern)
-    pcre_free (pattern);
-  if (pattern_extra)
-    pcre_free (pattern_extra);
+    pcre2_code_free (pattern);
 
   if (bin_data)
     free (bin_data);
