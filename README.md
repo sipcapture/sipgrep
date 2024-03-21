@@ -13,7 +13,7 @@ SipGrep 2
 * libpcap
 * libpcre
 
-On Debian/Ubuntu: `sudo apt-get install libpcap-dev libpcre3-dev`
+On Debian/Ubuntu: `sudo apt-get install libpcap-dev libpcre2-dev`
 
 On CentOS/RHEL: `yum install libpcap-devel pcre-devel`
 

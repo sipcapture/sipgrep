@@ -7,7 +7,7 @@ Build-Depends: autotools-dev,
                debhelper (>= 9),
                dpkg-dev (>= 1.16.1~),
                libpcap-dev,
-               libpcre3-dev,
+               libpcre2-dev,
 Standards-Version: 3.9.6
 Homepage: https://github.com/sipcapture/sipgrep
 Vcs-git: git://anonscm.debian.org/pkg-voip/sipgrep.git
