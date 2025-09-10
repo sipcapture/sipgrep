@@ -163,7 +163,7 @@ pcre2_code *pattern = NULL;
 PCRE2_SPTR match_data = NULL;
 char *bin_data = NULL;
 uint16_t match_len = 0;
-int8_t (*match_func) () = &blank_match_func;
+int8_t (*match_func) (unsigned char *, uint32_t) = &blank_match_func;
 
 int8_t dump_single = 0;
 void (*dump_func) (unsigned char *, uint32_t) = &dump_byline;
@@ -189,7 +189,7 @@ int file_counter = 0;
 struct timeval prev_ts = { 0, 0 }, prev_delay_ts = {
 0, 0};
 
-void (*print_time) () = NULL, (*dump_delay) () = dump_delay_proc_init;
+void (*print_time) (struct pcap_pkthdr *) = NULL, (*dump_delay) (struct pcap_pkthdr *) = dump_delay_proc_init;
 
 uint32_t ws_row, ws_col = 80, ws_col_forced = 0;
 
