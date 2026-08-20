@@ -226,7 +226,34 @@ unsigned int start_time = 0;
 char *friendly_scanner_uac = "friendly-scanner";
 char *friendly_scanner_range;
 
+static char *
+regex_and (const char *a, const char *b)
+{
+  size_t n;
+  char *out;
 
+  if (!a && !b)
+    return NULL;
+  if (!a) {
+    out = malloc (strlen (b) + 1);
+    if (out)
+      strcpy (out, b);
+    return out;
+  }
+  if (!b) {
+    out = malloc (strlen (a) + 1);
+    if (out)
+      strcpy (out, a);
+    return out;
+  }
+
+  n = strlen (a) + strlen (b) + 8;
+  out = malloc (n);
+  if (!out)
+    return NULL;
+  snprintf (out, n, "(?=%s)(?=%s)", a, b);
+  return out;
+}
 
 int
 main (int argc, char **argv)
@@ -294,6 +321,8 @@ main (int argc, char **argv)
       break;
     case 'G':
       print_report = 1;
+      if (quiet < 3)
+	quiet = 3;
       break;
     case 'O':
       dump_file = optarg;
@@ -520,25 +549,45 @@ main (int argc, char **argv)
   }
 
 
-  /* custom filter */
+  /* Header filters (-f/-t/-c) AND the match expression, not replace it. */
+  {
+    char *header_filter = NULL;
 
-  if (sip_to_filter && sip_from_filter) {
+    if (sip_to_filter && sip_from_filter) {
+      header_filter = malloc (strlen (sip_to_filter) + strlen (sip_from_filter) + strlen (SIP_FROM_TO_MATCH) + 1);
+      sprintf (header_filter, SIP_FROM_TO_MATCH, sip_from_filter, sip_to_filter);
+    }
+    else if (sip_from_filter) {
+      header_filter = malloc (strlen (sip_from_filter) + strlen (SIP_FROM_MATCH) + 1);
+      sprintf (header_filter, SIP_FROM_MATCH, sip_from_filter);
+    }
+    else if (sip_to_filter) {
+      header_filter = malloc (strlen (sip_to_filter) + strlen (SIP_TO_MATCH) + 1);
+      sprintf (header_filter, SIP_TO_MATCH, sip_to_filter);
+    }
 
-    custom_filter = malloc (strlen (sip_to_filter) + strlen (sip_from_filter) + strlen (SIP_FROM_TO_MATCH));
-    sprintf (custom_filter, SIP_FROM_TO_MATCH, sip_from_filter, sip_to_filter);
-    match_data = custom_filter;
-  }
-  else if (sip_from_filter) {
+    if (sip_contact_filter) {
+      char *cm = malloc (strlen (sip_contact_filter) + strlen (SIP_CONTACT_MATCH) + 1);
+      sprintf (cm, SIP_CONTACT_MATCH, sip_contact_filter);
+      if (header_filter) {
+	char *both = regex_and (header_filter, cm);
+	free (header_filter);
+	free (cm);
+	header_filter = both;
+      }
+      else
+	header_filter = cm;
+    }
 
-    custom_filter = malloc (strlen (sip_from_filter) + strlen (SIP_FROM_MATCH));
-    sprintf (custom_filter, SIP_FROM_MATCH, sip_from_filter);
-    match_data = custom_filter;
-  }
-  else if (sip_to_filter) {
-
-    custom_filter = malloc (strlen (sip_to_filter) + strlen (SIP_TO_MATCH));
-    sprintf (custom_filter, SIP_TO_MATCH, sip_to_filter);
-    match_data = custom_filter;
+    if (header_filter && match_data) {
+      custom_filter = regex_and (match_data, header_filter);
+      free (header_filter);
+      match_data = custom_filter;
+    }
+    else if (header_filter) {
+      custom_filter = header_filter;
+      match_data = custom_filter;
+    }
   }
 
 
@@ -2093,14 +2142,14 @@ usage (int8_t e)
 	  "   -s  is set the bpf caplen\n"
 	  "   -S  is set the limitlen on matched packets\n"
 	  "   -C  is no colors in stdout\n"
-	  "   -c  is search user in Contact: header\n"
-	  "   -f  is search user in From: header\n"
-	  "   -t  is search user in To: header\n"
+	  "   -c  is search user in Contact: header (AND with match expression)\n"
+	  "   -f  is search user in From: header (AND with match expression)\n"
+	  "   -t  is search user in To: header (AND with match expression)\n"
 	  "   -F  is read the bpf filter from the specified file\n"
 	  "   -H  is homer sipcapture URL (i.e. udp:10.0.0.1:9061)\n"
 	  "   -N  is show sub protocol number\n"
 	  "   -g  is disabled clean up dialogs during trace\n"
-	  "   -G  is print dialog report during clean up\n"
+	  "   -G  is print dialog report during clean up (no per-packet dump)\n"
 	  "   -J  is kill friendly scanner automatically\n"
 	  "   -j  is kill friendly scanner automatically matching user agent string\n"
 	  "   -K  is kill friendly scanner providing IP and port/portrange i.e.: 10.0.0.1:5060-5090\n"
