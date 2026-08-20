@@ -121,7 +121,16 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
 	break;
       }
     }
-    memcpy (psip->reason, tmp + 12, reason - (tmp + sipLen + codeLen + 1 /*that's covering /r/n */ ));
+    {
+      /* Reason phrase length is attacker-controlled (raw wire bytes up to CRLF).
+       * Clamp to the fixed destination buffer to avoid a stack overflow of
+       * psip->reason[] (CWE-787). */
+      long reason_len = reason - (tmp + sipLen + codeLen + 1 /*that's covering /r/n */ );
+      if (reason_len < 0) reason_len = 0;
+      if ((size_t) reason_len > sizeof (psip->reason) - 1)
+        reason_len = sizeof (psip->reason) - 1;
+      memcpy (psip->reason, tmp + 12, (size_t) reason_len);
+    }
 
   }
   else {
@@ -304,7 +313,12 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
 	  }
 	}
 	char contentLengthStr[32] = { 0 };
-	memcpy (contentLengthStr, tmp + 16, offset4);
+	/* offset4 is attacker-controlled (Content-Length header line length).
+	 * Clamp to the fixed local buffer to avoid a stack overflow (CWE-787). */
+	if (offset4 < 0) offset4 = 0;
+	if ((size_t) offset4 > sizeof (contentLengthStr) - 1)
+	  offset4 = sizeof (contentLengthStr) - 1;
+	memcpy (contentLengthStr, tmp + 16, (size_t) offset4);
 	contentLength = atoi (contentLengthStr);
       }
     }
