@@ -3,7 +3,7 @@
  * added tcp stream reassembling
  *
  * Copyright (c) 2007  Jan Andres <jandres@gmx.net>
- * Copyright (c) 2014  Alexandr Dubovikov  <alexandr.dubovikov@gmail.com>
+ * Copyright (c) 2014-2026  Alexandr Dubovikov  <alexandr.dubovikov@gmail.com>
  *
  */
 
