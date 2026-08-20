@@ -4,7 +4,7 @@
 /*
  * sipgrep.h, v 2.0 2014/03/18    
  *
- * Copyright (c) 2013-14  Alexandr Dubovikov <alexandr.dubovikov@gmail.com> 
+ * Copyright (c) 2013-2026  Alexandr Dubovikov <alexandr.dubovikov@gmail.com> 
  *
  */
 

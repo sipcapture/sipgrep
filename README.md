@@ -202,6 +202,6 @@ REASON: 407
 
 ## License
 
-Copyright (c) 2014-2016 Alexandr Dubovikov
+Copyright (c) 2014-2026 Alexandr Dubovikov
 
 sipgrep is released under GNU GPL v3. See [COPYING](COPYING) for details.
