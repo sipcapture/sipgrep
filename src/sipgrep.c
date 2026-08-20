@@ -617,29 +617,41 @@ main (int argc, char **argv)
     link_offset = PPPHDR_SIZE;
     break;
 
-#if HAVE_DLT_LOOP
+#ifdef DLT_LOOP
   case DLT_LOOP:
 #endif
   case DLT_NULL:
     link_offset = LOOPHDR_SIZE;
     break;
 
-#if HAVE_DLT_RAW
+#ifdef DLT_RAW
   case DLT_RAW:
     link_offset = RAWHDR_SIZE;
     break;
 #endif
+#ifdef DLT_IPV4
+  case DLT_IPV4:
+    link_offset = RAWHDR_SIZE;
+    break;
+#endif
+#ifdef DLT_IPV6
+  case DLT_IPV6:
+    link_offset = RAWHDR_SIZE;
+    break;
+#endif
 
+#ifdef DLT_LINUX_SLL
   case DLT_LINUX_SLL:
     link_offset = ISDNHDR_SIZE;
     break;
+#endif
 
-#if HAVE_DLT_IEEE802_11_RADIO
+#ifdef DLT_IEEE802_11_RADIO
   case DLT_IEEE802_11_RADIO:
     radiotap_present = 1;
 #endif
 
-#if HAVE_DLT_IEEE802_11
+#ifdef DLT_IEEE802_11
   case DLT_IEEE802_11:
     link_offset = IEEE80211HDR_SIZE;
     break;
@@ -770,7 +782,7 @@ process (u_char * d, struct pcap_pkthdr *h, u_char * p)
   unsigned char *data, *datatcp;
   uint32_t len = h->caplen;
 
-#if HAVE_DLT_IEEE802_11_RADIO
+#if defined(DLT_IEEE802_11_RADIO)
   if (radiotap_present) {
     uint16_t radio_len = ((struct SIPGREP_rtaphdr_t *) (p))->it_len;
     ip4_pkt = (struct ip *) (p + link_offset + radio_len);

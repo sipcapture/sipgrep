@@ -16,6 +16,12 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__sun) || defined(OS_FREEBSD) || defined(OS_SOLARIS) || defined(OS_DARWIN) || defined(OS_NETBSD)
+#include <netinet/in_systm.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #if USE_IPv6
