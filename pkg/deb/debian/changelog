@@ -1,3 +1,9 @@
+sipgrep (2.2.4) UNRELEASED; urgency=medium
+
+  * Fix off-by-one in regex_and() so combined -f/-t/-c filters keep the trailing parenthesis.
+
+ -- Alexandr Dubovikov <alexandr.dubovikov@gmail.com>  Sat, 22 Aug 2026 23:44:52 +0200
+
 sipgrep (2.2.3) UNRELEASED; urgency=medium
 
   * DLT_RAW / tun capture, FreeBSD netinet headers, AND header filters with match expression, -G report-only.
