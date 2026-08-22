@@ -247,7 +247,7 @@ regex_and (const char *a, const char *b)
     return out;
   }
 
-  n = strlen (a) + strlen (b) + 8;
+  n = strlen (a) + strlen (b) + 8 + 1;
   out = malloc (n);
   if (!out)
     return NULL;
