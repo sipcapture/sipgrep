@@ -1,3 +1,10 @@
+sipgrep (2.2.5) UNRELEASED; urgency=medium
+
+  * Reject IPv4 fragments whose total length is shorter than the header.
+  * Ignore a negative Content-Length instead of using it as a buffer length.
+
+ -- Alexandr Dubovikov <alexandr.dubovikov@gmail.com>  Thu, 12 Nov 2026 22:58:16 +0100
+
 sipgrep (2.2.4) UNRELEASED; urgency=medium
 
   * Fix off-by-one in regex_and() so combined -f/-t/-c filters keep the trailing parenthesis.

@@ -21,13 +21,14 @@ expect (int ok, const char *msg)
   }
 }
 
-static void
+static unsigned
 parse_buf (const char *msg, struct preparsed_sip *psip)
 {
   unsigned int bytes_parsed = 0;
 
   memset (psip, 0, sizeof (*psip));
   parse_message ((unsigned char *) msg, (unsigned int) strlen (msg), &bytes_parsed, psip);
+  return bytes_parsed;
 }
 
 int
@@ -79,6 +80,54 @@ main (void)
   expect (psip.reply == 200, "long Content-Length: reply 200");
   expect (strcmp (psip.reason, "OK") == 0, "long Content-Length: reason OK");
   expect (psip.callid.s != NULL && psip.callid.len > 0, "long Content-Length: callid intact");
+
+  /* Negative Content-Length must not be reported as a huge parsed length. */
+  {
+    const char *neg =
+      "INVITE sip:a@b SIP/2.0\r\n"
+      "Call-ID: abc-123\r\n"
+      "CSeq: 1 INVITE\r\n"
+      "Content-Length: -99\r\n"
+      "\r\n"
+      "BODY";
+    unsigned parsed = parse_buf (neg, &psip);
+
+    expect (parsed > 0 && parsed <= strlen (neg), "negative Content-Length: stays inside the buffer");
+    expect (parsed == strlen (neg), "negative Content-Length: consumes this buffer");
+    expect (psip.is_method == SIP_REQUEST, "negative Content-Length: still a request");
+  }
+
+  /* -m uses light_parse_message(); same negative length, same bound. */
+  {
+    const char *neg =
+      "INVITE sip:a@b SIP/2.0\r\n"
+      "Content-Length: -99\r\n"
+      "\r\n"
+      "BODY";
+    unsigned int parsed = 0;
+
+    expect (light_parse_message ((char *) neg, (unsigned int) strlen (neg), &parsed) == 1,
+	    "light: negative Content-Length parses");
+    expect (parsed == strlen (neg), "light: negative Content-Length consumes this buffer");
+  }
+
+  /* A positive Content-Length still splits a following message. */
+  {
+    const char *two =
+      "INVITE sip:a@b SIP/2.0\r\n"
+      "Content-Length: 4\r\n"
+      "\r\n"
+      "BODY"
+      "INVITE sip:c@d SIP/2.0\r\n";
+    const char *split = strstr (two, "\r\n\r\n");
+    unsigned int parsed = 0;
+    unsigned expect_n = (unsigned) (split - two) + 4 + 4;
+
+    expect (split != NULL, "light: fixture has a header break");
+    expect (light_parse_message ((char *) two, (unsigned int) strlen (two), &parsed) == 1,
+	    "light: positive Content-Length parses");
+    expect (parsed == expect_n, "light: positive Content-Length keeps the body length");
+  }
 
   if (failures) {
     fprintf (stderr, "%d failure(s)\n", failures);
