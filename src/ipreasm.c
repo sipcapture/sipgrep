@@ -325,6 +325,12 @@ add_fragment (struct reasm_ip_entry *entry, struct reasm_frag_entry *frag, bool 
 	if (!last_frag && (frag->len & 7) != 0)
 		return false;
 
+	/* ip_len shorter than the header wraps .len to a huge unsigned value.
+	 * offset + that length then wraps entry->len to 0 and the "extends past
+	 * end" check below never fires. */
+	if (frag->offset > ~frag->len)
+		return false;
+
 	if (entry->len != 0 && frag->len + frag->offset > entry->len)
 		return false; /* fragment extends past end of packet */
 
@@ -423,6 +429,8 @@ static unsigned char *
 assemble (struct reasm_ip_entry *entry, unsigned *output_len)
 {
 	struct reasm_frag_entry *frag = entry->frags->next; /* skip list head */
+	if (frag == NULL)
+		return NULL;
 	unsigned offset0 = frag->data_offset;
 	unsigned char *p = malloc (entry->len + offset0);
 	if (p == NULL)
@@ -449,6 +457,10 @@ assemble (struct reasm_ip_entry *entry, unsigned *output_len)
 
 	/* join all the payload fragments together */
 	while (frag != NULL) {
+		if (frag->offset > entry->len || frag->len > entry->len - frag->offset) {
+			free (p);
+			return NULL;
+		}
 		memcpy (p + offset0 + frag->offset, frag->data + frag->data_offset, frag->len);
 		frag = frag->next;
 	}
@@ -669,6 +681,9 @@ reasm_id_equal (enum reasm_proto proto, const union reasm_id *left, const union 
 static struct reasm_frag_entry *
 parse_packet (unsigned char *packet, unsigned len, enum reasm_proto *protocol, union reasm_id *id, unsigned *hash, bool *last_frag)
 {
+	if (len < 20)
+		return NULL;
+
 	struct ip *ip_header = (struct ip *) packet;
 	struct reasm_frag_entry *frag = NULL;
 
@@ -676,15 +691,22 @@ parse_packet (unsigned char *packet, unsigned len, enum reasm_proto *protocol, u
 		case 4: {
 			*protocol = PROTO_IPV4;
 			uint16_t offset = ntohs (ip_header->ip_off);
-			if (len >= ntohs (ip_header->ip_len) && (offset & (IP_MF | IP_OFFMASK)) != 0) {
+			unsigned ihl = (unsigned) ip_header->ip_hl * 4;
+			unsigned ip_len = ntohs (ip_header->ip_len);
+			/* An IPv4 header is at least 20 bytes, must fit in the captured
+			 * data, and ip_len must cover the header. Without the last check
+			 * the unsigned subtraction below wraps and reassembly copies an
+			 * attacker-chosen number of bytes past a tiny buffer. */
+			if (ihl >= 20 && ihl <= len && ip_len >= ihl && len >= ip_len &&
+			    (offset & (IP_MF | IP_OFFMASK)) != 0) {
 				frag = malloc (sizeof (*frag));
 				if (frag == NULL)
 					abort ();
 
 				*frag = (struct reasm_frag_entry) {
-					.len = ntohs (ip_header->ip_len) - ip_header->ip_hl * 4,
+					.len = ip_len - ihl,
 					.offset = (offset & IP_OFFMASK) * 8,
-					.data_offset = ip_header->ip_hl * 4,
+					.data_offset = ihl,
 					.data = packet,
 				};
 

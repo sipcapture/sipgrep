@@ -320,6 +320,14 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
 	  offset4 = sizeof (contentLengthStr) - 1;
 	memcpy (contentLengthStr, tmp + 16, (size_t) offset4);
 	contentLength = atoi (contentLengthStr);
+	/* atoi() accepts a leading '-'. The comparison below is signed, so a
+	 * negative length passes and wraps when stored in *bytes_parsed.
+	 * Treat it as a missing header and keep the parsed length inside
+	 * this buffer. */
+	if (contentLength < 0) {
+	  contentLength = 0;
+	  contentLengthFound = 0;
+	}
       }
     }
   }
@@ -354,6 +362,12 @@ parse_message (unsigned char *message, unsigned int blen, unsigned int *bytes_pa
     *bytes_parsed = blen;
   }
 
+  /* A wrapped length is larger than either buffer. Never report it. */
+  if (packet_len == 0 && *bytes_parsed > blen)
+    *bytes_parsed = blen;
+  else if (*bytes_parsed > new_len)
+    *bytes_parsed = new_len;
+
   return message_parsed;
 }
 
@@ -363,6 +377,7 @@ int light_parse_message(char *message, unsigned int blen, unsigned int* bytes_pa
 	unsigned int new_len = blen;
 	int header_offset = 0;
         int content_length = 0;
+        int content_length_bad = 0;
         	
 	if (blen <= 2) return 0;
 
@@ -383,7 +398,15 @@ int light_parse_message(char *message, unsigned int blen, unsigned int* bytes_pa
 		
 				/* BODY */
 				if((offset - last_offset) == 2) {
-				        new_len = offset + content_length;
+					/* A negative Content-Length wraps when stored in
+					 * *bytes_parsed. A value past this buffer would make
+					 * the caller read off the end of the packet. */
+					if (content_length_bad || offset < 0
+					    || (unsigned) offset > blen
+					    || (unsigned) content_length > blen - (unsigned) offset)
+						new_len = blen;
+					else
+						new_len = (unsigned) offset + (unsigned) content_length;
 					*bytes_parsed = new_len;
 					break;
 		                }
@@ -393,6 +416,10 @@ int light_parse_message(char *message, unsigned int blen, unsigned int* bytes_pa
 					if(*(tmp+1) == ':') header_offset = 1;
                             	   	else header_offset = CONTENTLENGTH_LEN;					
   					content_length = atoi(tmp+header_offset+1);
+					if (content_length < 0) {
+					  content_length = 0;
+					  content_length_bad = 1;
+					}
 					continue;
                                }
                        }
